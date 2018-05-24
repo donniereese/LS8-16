@@ -1,3 +1,5 @@
+// const config = require('conf.js');
+
 // Memory
 const MEM = require('./memory');
 const BUS = require('./bus');
@@ -42,12 +44,14 @@ const RET   = 0b00010000;   // Return from Call
 // Logic Extension
 const JMP   = 0b00010001;   // Jump to memory
 const JTL   = 0b00011110;   // Jump to previous label
-const JEQ   = 0b00010011;   // Jump if equal
-const JNE   = 0b00010100;   // Jump if not equal
+const JEQ   = 0b00010100;   // Jump if equal
+const JNE   = 0b00010101;   // Jump if not equal
 const CMP   = 0b00010110;   // Compare
 
 // Logical Structuring extensions
 const LBL   = 0b01100000;   // Set a Label
+const LBJMP = 0b00010111;   // Jump to label
+const LBSET = 0b00011000;   // set jump label
 
 // Memory Control
 const ADR   = 0b11011000;   // (ADR)ess a memory block for read and write.
@@ -195,6 +199,9 @@ class CPU {
         if (GETI) bt[GETI] = this.GETI;
         // if (RETI) bt[RETI] = this.RETI;
 
+        if (LBJMP) bt[LBJMP] = this.jumpToLabel;
+        if (LBSET) bt[LBSET] = this.setLabel;
+
         this.branchTable = bt;
 
         const loadscreen = [
@@ -284,6 +291,12 @@ class CPU {
         this.membus.READ();                                         // read memory location
         const currentInstruction = this.membus.DATA();              // read data from membus
         // console.log(currentInstruction);
+        if (this.reg.PC <= 23 && this.reg.PC >= 8) {
+            // this is LABEL country, so basically symbolic links.  jump to that address.
+            this .reg.PC = currentInstruction;
+            return;
+        }
+        // this is the actual instruction
         const handler = this.branchTable[currentInstruction];
 
         if (handler === undefined) {
@@ -783,6 +796,23 @@ class CPU {
      */
     rsrm() {
         this.reg[this.curReg] = this.reg.SRM;
+    }
+
+    /**
+     * [jumpToLabel description]
+     * @method jumpToLabel
+     * @return {[type]}    [description]
+     */
+    jumpToLabel() {
+        this.reg.PC += 2;
+    }
+
+    /**
+     * [setLabel description]
+     * @method setLabel
+     */
+    setLabel() {
+        this.reg.pc += 3;
     }
 
     /**

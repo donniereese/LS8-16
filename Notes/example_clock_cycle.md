@@ -3,19 +3,19 @@
 ## CPU Cycle Flow
 1. Flags
     a. **FALT**
-        The fault flag is set only if the CPU or a component has registered a fault. This causes 
+        The fault flag is set only if the CPU or a component has registered a fault. This causes
         The system to halt right away and not continue.
     b. **WAIT**
-        The system has no current instructions to run and is waiting for input to return from 
+        The system has no current instructions to run and is waiting for input to return from
         the wait state.
     c. **INST**
-        There is currently a mult-part instruction being ran and should skip any further flags 
+        There is currently a mult-part instruction being ran and should skip any further flags
         until this is unset by the finishing of the instruction. (Skips INTR)
     d. **INTR**
-        There is a system interrupt raised and the system should push everything to the stack 
+        There is a system interrupt raised and the system should push everything to the stack
         and handle this before returning to the stack and pulling everything back off.
         1. Push Registers PC,RWS, MDR & MAR
-        2. Subtract Interrupt ID from last 
+        2. Subtract Interrupt ID from last
         .. Set the PC
         .. Get Interrupt Vector from Interrupt Address...............
         .. Set MAR to Interrupt Vector
@@ -46,5 +46,11 @@
     12. .... RWS (Read/Write Location Switch) (Transition from SRM name)
     13. .... MDR (Memory Data Register)
     14. .... MAR (Memory Address Register)
-    15. .... IS 
+    15. .... IS
     16. .... Reserved Register
+
+
+
+
+## Clock Cycle
+    01. .... 

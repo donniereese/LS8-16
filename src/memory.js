@@ -1,9 +1,3 @@
-/**
- *
- *
- *
- */
-
 // Valid memory types list
 const validTypes = [
     'memmory',

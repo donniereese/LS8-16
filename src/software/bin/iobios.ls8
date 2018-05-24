@@ -1,0 +1,51 @@
+# This program was written by Donnie Reese for the LS8 emulator
+# It boots to a waiting state and prints whatever keyboard input
+# a user types onto the display.
+#/dT:h2;
+01 # INIT
+20 # SETI
+00 #   INT_ADDR = 0     + Interrupt 0 is always the keyboard
+05 #   ADDR = 4         + The address for the interrupt code
+18 # LBSET              + Label: check_cursor_end_of_line
+00 #   LBL_ADDR = 0
+.. #   ADDR = ..
+.. # LBSET              + Label:
+17 # LBJMP
+.. #   LBL_ADDR = 0
+.. #
+.. # read current value from interrupt buffer into register 3
+.. # read display cursor x pos into register 1
+.. # read
+.. # read display cursor y pos into register 5
+.. # read the value at memory location 2 into register 1
+.. # read register 4 into register 1
+.. # read the integer 1 into register 2
+.. # sum
+.. #
+.. @
+
+# 00000001 # initialize #initializes the app in rom
+# 00100000 # Set interrupt 0 to memory address
+# 00000000 #      interrupt 0
+# 00000110 #      interrupt location in memory
+# 00010001 # jump to memory address
+# 00000111 #      memory address 7
+# -------- # set register to
+# -------- #      register 0
+# -------- # write value to directly to memory
+# -------- #      memory location (let's say 24 to allow for the first 24 values for storage) the next position in memory will be the start of the user program buffer.
+# -------- #      value to save (25)
+# -------- # read extension register buffer (should write to current register)
+# -------- # set register to
+# -------- #      register 1
+# -------- # save the value to memory address
+# -------- #      memory location
+#
+# 00000010 # set register
+# 00000000 #      register address 0
+# 00010001 # jump to memory address
+# 00000111 #      memory address 7
+# set register to 0                 # keyboard interrupt
+# get EXT register for interrupt
+#       interrupt 0
+# copy extension register to register
