@@ -4,8 +4,8 @@
 const MEM = require('./memory');
 const BUS = require('./bus');
 
-const INIT  = 0b00000001;   // Initialize
-const SETR  = 0b00000010;   // Set Register
+const INIT  = 0b00000001;   // Initialize                   0x01
+const SETR  = 0b00000010;   // Set Register                 0x02
 const GETR  = 0b01101111;   // Get Register Value
 const SAVE  = 0b00000100;   //
 const LOAD  = 0b00000111;   //
@@ -17,14 +17,14 @@ const HALT  = 0b00000000;   //
 const PRA   = 0b01000001;   //
 
 // Universal Ext. Commands  //
-const EXTDO = 0b11000000;   // Issue {extension#} a {extension Command}
-const EXTRT = 0b11000001;   // Get {extension#} to return
+// const EXTDO = 0b11000000;   // Issue {extension#} a {extension Command}
+// const EXTRT = 0b11000001;   // Get {extension#} to return
 
 // Load and store extensions
 const LD    = 0b00001000;   //
 const ST    = 0b00001001;   //
-const LDRI  = 0b00010010;   //
-const STRI  = 0b00010011;   //
+const LDRI  = 0b00010010;   // LoaD Register Indirect
+const STRI  = 0b00010011;   // STore Register Indirect
 const STOR  = 0b11110101;   //
 const LODM  = 0b11110111;   //
 
@@ -40,6 +40,7 @@ const POP   = 0b00001011;   // pop off stack
 // call and return extensions
 const CALL  = 0b00001111;   // Call subroutine
 const RET   = 0b00010000;   // Return from Call
+const PASS  = 0b01011110;   // Pass to a memory address without stack moving
 
 // Logic Extension
 const JMP   = 0b00010001;   // Jump to memory
@@ -54,7 +55,7 @@ const LBJMP = 0b00010111;   // Jump to label
 const LBSET = 0b00011000;   // set jump label
 
 // Memory Control
-const ADR   = 0b11011000;   // (ADR)ess a memory block for read and write.
+const ADR   = 0b10111000;   // (ADR)ess a memory block for read and write.
 const RAD   = 0b11011001;   // Set (R)ead (AD)dress block
 const WAD   = 0b11011010;   // Set (W)rite (AD)dress block
 const RADR  = 0b11011011;   // (R)ead (ADR)ess for block
@@ -66,7 +67,18 @@ const CPYR  = 0b11000011;   // Copy Recursive from range to another range
 const SETI  = 0b00100000;   // Set Interrupt Address
 const GETI  = 0b00100001;   // Get Interrupt Address
 const RETI  = 0b11101110;   // (RET)urn from {I}nterupt
+const INPT  = 0b01111110;   // Read extension Buffer
+const OTPT  = 0b01111111;   // Place on extension buffer
+
 // Display Extension
+const SCORC  = 0b11010000;   // Set Character column and row (next two args) then character (3rd arg)
+const SCORX  = 0b11010001;   // Set X coord for the character buffer writing
+const SCORY  = 0b11010010;   // set the y coord for the character buffer writing
+const SCHAR  = 0b11010011;   // Set the char to write at the coords targeted
+const GECHR  = 0b11010100;   // Get character from set x and y
+const GECX   = 0b11010101;   // Get Character cursor x
+const GECY   = 0b11010111;   // Get character cursor y
+const GECXY  = 0b11011000;   // Get Chatacter at x, y
 
 
 const SP = 240; // stack poointer in register 1015, 8 - max 1023
@@ -146,11 +158,11 @@ class CPU {
                     this.flags.INTR = true;
                 },
                 (byte) => {
-
                     // set ext mem block location.
                     // this.mem[241] = byte;
                     // set input register
-                    this.EXT.reg[i] = byte;
+                    this.EXT.reg[i] = { input: '', output: '' };
+                    this.EXT.reg[i].input = byte;
                 }
             );
         }
@@ -188,6 +200,7 @@ class CPU {
         // Look for push&pop extension
         if (PUSH) bt[PUSH] = this.PUSH;
         if (POP) bt[POP] = this.POP;
+        if (PASS) bt[PASS] = this.PASS;
         // Look for Call & Return extension
         if (CALL) bt[CALL] = this.CALL;
         if (RET) bt[RET] = this.RET;
@@ -197,8 +210,11 @@ class CPU {
         // Interrupt control extension
         if (SETI) bt[SETI] = this.SETI;
         if (GETI) bt[GETI] = this.GETI;
-        // if (RETI) bt[RETI] = this.RETI;
+        if (RETI) bt[RETI] = this.RETI;
+        if (INPT && this.INPT) bt[INPT] = this.INPT;
+        if (OTPT && this.OTPT) bt[OTPT] = this.OTPT;
 
+        if (LBL) bt[LBL] = this.BLANK;
         if (LBJMP) bt[LBJMP] = this.jumpToLabel;
         if (LBSET) bt[LBSET] = this.setLabel;
 
@@ -247,7 +263,7 @@ class CPU {
      * startClock
      */
     startClock() {
-        this.clock = setInterval(() => { console.log(Date.now()); this.tick(); }, 200);
+        this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, 10);
     }
 
     /**
@@ -256,6 +272,7 @@ class CPU {
      */
     stopClock() {
         clearInterval(this.clock);
+        process.exit();
     }
 
     /**
@@ -264,6 +281,8 @@ class CPU {
      */
     tick() {
         if (this.flags.INTR === true && !this.flags.INST) {
+            // console.log('PC: ', this.reg.PC);
+            // this.PUSH();
             // There is an interrupt AND there are no current instructions in the middle of completing.
             // Mask the binary
             const masked = this.reg[this.reg.IS] & this.reg[this.reg.IM];
@@ -282,6 +301,8 @@ class CPU {
                 }
             }
             this.flags.INTR = false;
+            // this.POP();
+            // console.log('PC: ', this.reg.PC);
         }
 
 
@@ -291,11 +312,12 @@ class CPU {
         this.membus.READ();                                         // read memory location
         const currentInstruction = this.membus.DATA();              // read data from membus
         // console.log(currentInstruction);
-        if (this.reg.PC <= 23 && this.reg.PC >= 8) {
-            // this is LABEL country, so basically symbolic links.  jump to that address.
-            this .reg.PC = currentInstruction;
-            return;
-        }
+        // console.log(`EXEC@${this.reg.PC}::`, currentInstruction.toString(16));
+        // if (this.reg.PC <= 23 && this.reg.PC >= 8) {
+        //     // this is LABEL country, so basically symbolic links.  jump to that address.
+        //     this .reg.PC = currentInstruction;
+        //     return;
+        // }
         // this is the actual instruction
         const handler = this.branchTable[currentInstruction];
 
@@ -401,12 +423,19 @@ class CPU {
      * @method SAVE
      */
     SAVE() {
-        console.log('SAVE...');
+        // console.log('SAVE...');
         this.membus.ADDR = this.reg.PC + 1;                         // Set memory read/write address
         this.membus.READ();                                         // read memory
         this.reg[this.curReg] = this.membus.DATA();                 // read membus data
         // this.reg[this.curReg] = this.mem[this.reg.PC + 1];
         this.reg.PC += 2;                                           // increment PC by 2
+    }
+
+    PASS() {
+        this.membus.ADDR = this.reg.PC + 1;
+        this.membus.READ();
+        const addr = this.membus.DATA();
+        this.reg.PC = addr;
     }
 
     /**
@@ -519,7 +548,8 @@ class CPU {
      * @method HALT
      */
     HALT() {
-        console.log('HALT');
+        console.log('HALTING...');
+        if (this.bufferedString) console.log(this.bufferedString);
         this.stopClock();
     }
 
@@ -827,23 +857,23 @@ class CPU {
         const intVertex = this.alu('MUL', interruptNum, 0b00000010, true);  // Interrupt Vertex, not interrupt store    EX: 0   /   2   /   4
         const lastIndex = this.alu('SUB', 0b00000000, 0b00000001, true);    // Get Last memory address                  Ex: 255
 
-        console.log('last index: ', lastIndex);
+        // console.log('last index: ', lastIndex);
 
         const interLoc = this.alu('SUB', lastIndex, intVertex, true);       // Interrupt memory location                EX: 255 /   253 /   251
 
-        console.log('interrupt location address: ', interLoc);
+        // console.log('interrupt location address: ', interLoc);
 
         this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000010, true);  // Get second argument for
         this.membus.READ();                                                 // location of interrupt in memory
         const interruptDataLoc = this.membus.DATA();
 
-        console.log(`Interrupt Memory Jump Location: ${interruptDataLoc}`);
+        // console.log(`Interrupt Memory Jump Location: ${interruptDataLoc}`);
 
         this.membus.ADDR = interLoc;
         this.membus.ADDRVAL =   interruptDataLoc;
         this.membus.WRITE();
 
-        this.reg.PC += 2;
+        this.reg.PC += 3;
     }
 
     /**
@@ -867,7 +897,40 @@ class CPU {
      * @method RETI
      */
     RETI() {
-        this.POP
+        this.curReg = 254;
+        this.POP();
+        this.reg.PC = this.reg[this.curReg];
+    }
+    
+    /**
+     * Get the input of the supplied extension bufer
+     * @method INPT
+     */
+    INPT() {
+        this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
+        this.membus.READ();
+        const extNum = this.membus.DATA();
+        const char = this.EXT.reg[extNum].input;
+        
+        if (!this.bufferedString) this.bufferedString = '';
+        
+        this.bufferedString += char;
+        
+        switch(char) {
+            case '01110001': this.HALT(); break;
+            case '00001101': process.stdout.write('\n'); break;
+            default: process.stdout.write(String.fromCharCode(parseInt(char, 2)));
+        }
+        
+        this.reg.PC += 2;
+    }
+    
+    /**
+     * Put a byte in the extension buffer
+     * @method OTPT
+     */
+    OTPT() {
+        this.reg.PC += 2;
     }
 
     /**
@@ -920,6 +983,15 @@ class CPU {
         // this.mem[SP] = this.reg[this.curReg];
         // Incremeent the SP holder
         this.alu('DEC', SP)
+    }
+
+    /**
+     * Blank instruction line.. skip
+     * @method BLANK
+     */
+    BLANK() {
+        // this.alu('INC', SP);
+        this.reg.PC++;
     }
 }
 

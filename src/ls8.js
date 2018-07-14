@@ -151,29 +151,8 @@ function loadMemory(contents) {
         if (instructions.length < instPointer + 1) instructions[instPointer] = '';
         instructions[instPointer] = `${instructions[instPointer]}${curChar}`;
     }
-    console.log(instructions);
-
-    // const lines = contents.split('\n');
-    // let address = 0;
-    //
-    // for (let i = 0; i < lines.length; i++) {
-    //     let line = lines[i];
-    //
-    //     // find comment
-    //     const commentIndex = line.indexOf('#');
-    //     if (commentIndex != -1) {
-    //         line = line.substr(0, commentIndex);
-    //     }
-    //
-    //     line = line.trim();
-    //
-    //     if (line === '') {
-    //         continue;
-    //     }
-    //     const val = parseInt(line, 2); // convert from binary string to decimal
-    //
-    //     cpu.poke(address++, val);
-    // }
+    // console.log(instructions);
+    return instructions;
 }
 
 
@@ -198,6 +177,8 @@ const memoryBus = new MEMBUS([rom, mem], [wBus, rBus, insBus]);
 const keyboard = new KEYBOARD();
 const cpu = new CPU([(a,b) => {keyboard.hook(a,b)}], memoryBus);
 const contents = readFrom(ar[0]);
-loadMemory(contents);
+const instructionsArray = loadMemory(contents);
+
+instructionsArray.forEach((v, i) => { rom._bank[i] = v });
 
 cpu.startClock();

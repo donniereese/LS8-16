@@ -119,8 +119,8 @@ slower and separately from the faster CPU cycl
           | EXTDO    | C0  | 11000000 |                         |#| LBPUT    |     |          |                         |
           | EXTRT    | C1  | 11000001 |                         |#| LBDEL    |     |          |                         |
           | LD       | 08  | 00001000 |                         |#| LBCLR    |     |          |                         |
-          | ST       | 09  | 00001001 |                         |#|          |     |          |                         |
-          | LDRI     | 12  | 00010010 |                         |#|          |     |          |                         |
+          | ST       | 09  | 00001001 |                         |#| JMPM     |     |          | ADDR                    |
+          | LDRI     | 12  | 00010010 |                         |#| JMPR     |     |          | ADDR                    |
           | STRI     | 13  | 00010011 |                         |#|          |     |          |                         |
           | STOR     | F5  | 11110101 |                         |#|          |     |          |                         |
           | LODM     | F7  | 11110111 |                         |#|          |     |          |                         |

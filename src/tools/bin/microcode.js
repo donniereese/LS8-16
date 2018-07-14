@@ -5,6 +5,36 @@ const getCursorPosition = require('get-cursor-position');
 // instruction set definitions
 const { instructionSet } = require('../../conf.js');
 
+// DOM
+class DOM {
+    constructor() {
+        this.display = 'block';
+        this.margin = 0;
+        this.padding = 0;
+        this.border = {
+            width: 0,
+            char: {
+                tl: '',
+                tr: '',
+                br: '',
+                bl: '',
+            }
+        }
+        this.children = [];
+        this.innerText = '';
+        this.contentsArray = [];
+    }
+}
+
+class DOMContent {
+    constructor(rawContents) {
+        this.width = 0;
+        this.height = 0;
+        this.innerText = JSON.stringify(rawContents);
+        this.contentsArray = [];
+    }
+}
+
 // Formatter
 class Formatter {
     constructor() {
@@ -94,10 +124,10 @@ class MicrocodeCLI {
 
         // this.ui.title.vis.z = 100;
 
-        this.fill('▒')
-            .fill(' ', [1,1], [this.term.columns - 1, this.term.rows - 3])
-            .box([1,1], [this.term.columns - 1, this.term.rows - 4])
-            .sc([1, this.term.rows - 3])
+        this.fill('▒')                                                          // fill outer border
+            .fill(' ', [1,1], [this.term.columns - 1, this.term.rows - 3])      // fill ...
+            .box([1,1], [this.term.columns - 1, this.term.rows - 4])            // draw content box
+            .sc([1, this.term.rows - 3])                                        // move to lower portion
             .output(this.draw.char.shadow.light.repeat(this.term.columns - 2))
             // .output(this.draw.char.box.bold.bar.repeat(this.term.columns))
             .sc([0, this.term.rows - 1])
@@ -335,7 +365,14 @@ class MicrocodeCLI {
     }
 
     readKey(s, key) {
-        switch(key.keye) {
+        if (this.flags.in.cmd) {
+            switch(key.key) {
+                case 'escape':
+                    break;
+                default:
+            }
+        }
+        switch(key.key) {
             case 'escape':
                 console.log(s, key);
             default:
