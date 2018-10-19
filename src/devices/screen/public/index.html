@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Render Screen</title>
+        <link rel="stylesheet" type="text/css" href="./css/main.css">
+    </head>
+    <body>
+        <div id="screenContainer">
+            <canvas width="480" height="320" id="screen"></canvas>
+        </div>
+        <div class="container">
+            <form action="">
+                <label>Row<input type="text" id="bitmapRow"></label>
+                <label>Column<input type="text" id="bitmapColumn"></label>
+                <label>Value<input type="text" id="bitmapValue"></label>
+            </form>
+        </div>
+
+    <script src="./js/external/Tone.min.js" charset="utf-8"></script>
+    <script src="./js/charset.js" charset="utf-8"></script>
+    <script src="./js/render.js" charset="utf-8"></script>
+    <script>
+        charArr = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','1','2','3','4','5','6','7','8','9','0','Space','.','/','backslash',':',',','\'','!','>','<','$','@','_','unknown','spclSquare','spclHash','spclHashHalf','spclKey'];
+        //create a synth and connect it to the master output (your speakers)
+        var synth = new Tone.Synth().toMaster()
+        for (bRow in buffer) {
+            for (bCol in buffer[bRow]) {
+                buffer[bRow][bCol] = 'spclSquare';
+            }
+        }
+        window.setTimeout(() => {
+            for (bRow in buffer) {
+                for (bCol in buffer[bRow]) {
+                    const charIn = Math.floor(Math.random() * charArr.length);
+                    buffer[bRow][bCol] = charArr[charIn];
+                }
+            }
+        },300);
+
+
+        window.setTimeout(() => {
+            //play a middle 'C' for the duration of an 8th note
+            synth.triggerAttackRelease('C4', '256n')
+            synth.triggerAttackRelease('C4', '64n', 1)
+            synth.triggerAttackRelease('G4', '64n', 1.2)
+            synth.triggerAttackRelease('B4', '64n', 1.4)
+            synth.triggerAttackRelease('E4', '64n', 1.6)
+            synth.triggerAttackRelease('G4', '64n', 1.8)
+            synth.triggerAttackRelease('B4', '64n', 2)
+
+
+            for (bRow in buffer) {
+                for (bCol in buffer[bRow]) {
+                    buffer[bRow][bCol] = '';
+                }
+            }
+        }, 1800);
+
+    </script>
+    </body>
+</html>

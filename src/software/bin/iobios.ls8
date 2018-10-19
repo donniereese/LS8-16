@@ -3,13 +3,15 @@
 # a user types onto the display.
 #/dT:h2;
 01 # INIT
-20 # SETI
+20 # SETI               + Set interrupt address to memory location
 00 #   INT_ADDR = 0     + Interrupt 0 is always the keyboard
 04 #   ADDR = 4         + The address for the interrupt code
 60 # LABEL: keyboard interrupt
-02 # SETR
-03 #   REG_ADDR = 3
-#.. # read current value from interrupt buffer into register 3
+02 # SETR               + set current register address
+03 #   REG_ADDR = 3     + register address
+7E # INPT               + read current value from interrupt buffer into register 3
+00 #   EXT_ADDR = 0     + extension address for subroutine
+41 # PRA                + print alpha-numeric character in register
 #.. # read display cursor x pos into register 1
 #.. # read
 #.. # read display cursor y pos into register 5
@@ -17,7 +19,7 @@
 #.. # read register 4 into register 1
 #.. # read the integer 1 into register 2
 #.. # sum
-#.. #
+0B # RET                + Return from Interrupt subroutine
 00 # HALT
 # 00000001 # initialize #initializes the app in rom
 # 00100000 # Set interrupt 0 to memory address

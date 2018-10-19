@@ -141,7 +141,7 @@ class CPU {
         this.EXT = Array(8);
         this.EXT.fill(null);
         this.EXT.reg = Array(24);
-        this.EXT.reg.fill(0);
+        this.EXT.reg.fill({ input: '', output: '' });
 
         // Extensions..
         // I don't know if this is like a bus but ugh....
@@ -161,8 +161,14 @@ class CPU {
                     // set ext mem block location.
                     // this.mem[241] = byte;
                     // set input register
-                    this.EXT.reg[i] = { input: '', output: '' };
+                    // this.EXT.reg[i] = { input: '', output: '' };
                     this.EXT.reg[i].input = byte;
+                },
+                () => {
+                    const extId = i;
+                    const v = this.EXT.reg[extId].output;
+                    this.EXT.reg[extId].output = '';
+                    return v;
                 }
             );
         }

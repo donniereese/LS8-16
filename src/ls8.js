@@ -3,6 +3,8 @@ const fs = require('fs');
 const CPU = require('./cpu');
 // Keyboard IO "peripheral"
 const KEYBOARD = require('./keyboard');
+// Display Devices
+const DISPLAY = require('./devices/screen');
 // Memory Controller Module "chip"
 const MEMBUS = require('./membusController');
 // Memory Module chip "board"
@@ -175,7 +177,11 @@ const memoryBus = new MEMBUS([rom, mem], [wBus, rBus, insBus]);
  * Main Initialization
  */
 const keyboard = new KEYBOARD();
-const cpu = new CPU([(a,b) => {keyboard.hook(a,b)}], memoryBus);
+const display = new DISPLAY();
+const cpu = new CPU([
+    (a,b) => {keyboard.hook(a,b)},
+    (a, b) => {display.hook(a, b)},
+], memoryBus);
 const contents = readFrom(ar[0]);
 const instructionsArray = loadMemory(contents);
 

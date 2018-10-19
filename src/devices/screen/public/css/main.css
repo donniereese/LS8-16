@@ -1,0 +1,66 @@
+* {
+    box-sizing: border-box;
+}
+
+html. body, div, span, header, footer, main, aside, section p, em, strong, ul, li, form, input, button {
+    margin: 0;
+    padding: 0;
+}
+
+#screenContainer {
+    width: 100vw;
+    height: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* border: 1em solid #333; */
+}
+
+#screen {
+    /* width: 480px;
+    height: 320px; */
+    background: #000;
+    /* border-bottom: 1em solid #333;
+    border-right: 1em solid #333; */
+    image-rendering: pixelated;
+    width: 100%;
+    height: auto;
+    margin: 0;
+}
+
+body {
+    background: #334;
+    text-align: center;
+    /* padding-top: 4em; */
+}
+
+.container {
+    width: 480px;
+    margin: 0 auto;
+}
+
+form {
+    color: #fff;
+    text-align: left;
+    margin: 0;
+    padding: 2em;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+input {
+    font-size: 1em;
+    width: 5.5em;
+    color: #fff;
+    border: .125em solid #667;
+    padding: .25em;
+    margin-left: .5em;
+    background: #112;
+    outline: none;
+}
+
+label {
+    margin: .25em;
+}
