@@ -4,14 +4,15 @@
 const MEM = require('./memory');
 const BUS = require('./bus');
 
-const INIT  = 0b00000001;   // Initialize                   0x01
-const SETR  = 0b00000010;   // Set Register                 0x02
-const GETR  = 0b01101111;   // Get Register Value
-const SAVE  = 0b00000100;   //
-const LOAD  = 0b00000111;   //
-const MUL   = 0b00000101;   //
-const PRN   = 0b00000110;   //
-const HALT  = 0b00000000;   //
+const INIT    = 0b00000001;   // Initialize                   0x01
+const INITALK = 0b11111110;   // Initialize with Debug mode
+const SETR    = 0b00000010;   // Set Register                 0x02
+const GETR    = 0b01101111;   // Get Register Value
+const SAVE    = 0b00000100;   //
+const LOAD    = 0b00000111;   //
+const MUL     = 0b00000101;   //
+const PRN     = 0b00000110;   //
+const HALT    = 0b00000000;   //
 
 // Output Extension
 const PRA   = 0b01000001;   //
@@ -121,6 +122,7 @@ class CPU {
             INTR: false,
             EQLS: false,
             BOOL: false,
+            DEBUG: true
 
         };
         // Set carryover flag
@@ -179,6 +181,7 @@ class CPU {
     buildBranchTable() {
         let bt = {
             [INIT]: this.INIT,
+            [INITALK]: this.INITALK,
             [SETR]: this.SETR,
             [GETR]: this.GETR,
             [SAVE]: this.SAVE,
@@ -226,6 +229,10 @@ class CPU {
 
         this.branchTable = bt;
 
+        this.loaded = false;
+        this.loadedRow = 0;
+        this.loadedPos = 0;
+
         const loadscreen = [
             `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
             `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
@@ -242,7 +249,10 @@ class CPU {
             `00001000 00001000 00001000 00001000 00001000 00001000 00001000`
         ];
 
-        loadscreen.forEach(line => console.log(line));
+        this.loadscreen = loadscreen;
+
+        //loadscreen.forEach(line => console.log(line));
+        this.write('\x1b[2J');
     }
 
     /**
@@ -269,7 +279,8 @@ class CPU {
      * startClock
      */
     startClock() {
-        this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, 10);
+        const time = this.flags.DEBUG ? 10 : 6;
+        this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, time);
     }
 
     /**
@@ -281,11 +292,26 @@ class CPU {
         process.exit();
     }
 
+    write(t) {
+      process.stdout.write(t);
+    }
+
     /**
      * tick
      *
      */
     tick() {
+        if (!this.loaded) {
+          process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
+          this.loadedPos++;
+          if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
+            this.loadedRow++;
+            this.loadedPos = 0;
+            process.stdout.write('\n');
+          }
+          if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
+          return;
+        }
         if (this.flags.INTR === true && !this.flags.INST) {
             // console.log('PC: ', this.reg.PC);
             // this.PUSH();
@@ -324,14 +350,23 @@ class CPU {
         //     this .reg.PC = currentInstruction;
         //     return;
         // }
+        
         // this is the actual instruction
         const handler = this.branchTable[currentInstruction];
+
+        if (this.flags.DEBUG) {
+          this.write('\x1b[s');
+          this.write('\x1b[K');
+          this.write('\x1b[0;0H');
+          this.write(`PC:${this.reg.PC}  INSTRUCTION: ${currentInstruction.toString(16)}`);
+          this.write('\x1b[u');
+        }
 
         if (handler === undefined) {
             console.error('ERROR: invalid instruction ' + currentInstruction);
             console.log('MEMORY STACK:\n');
-            console.log('ROM:\n', this.membus.banks[0].bank);
-            console.log('MEM:\n', this.membus.banks[1].bank);
+            //console.log('ROM:\n', this.membus.banks[0]._bank);
+            //console.log('MEM:\n', this.membus.banks[1]._bank);
             this.stopClock();
             return;
         }
@@ -393,6 +428,23 @@ class CPU {
      */
     INIT() {
         this.flags.INTR = false;
+        this.flags.DEBUG = false;
+        this.curReg = 0;
+        /* set Interupt Mask to 0 so all interupts are blocked. */
+        this.membus.ADDR = this.reg.IM;                             // set memory read/write address
+        this.membus.ADDRVAL = 0b00000000;                           // set memory value to write
+        this.membus.WRITE();                                        // write the memory
+        // this.mem[this.reg.IM] = 0b00000000;
+        this.reg.PC++;                                              // go to next instruction
+    }
+
+    /**
+     * Initalk
+     *
+     */
+    INITALK() {
+        this.flags.INTR = false;
+        this.flags.DEBUG = true;
         this.curReg = 0;
         /* set Interupt Mask to 0 so all interupts are blocked. */
         this.membus.ADDR = this.reg.IM;                             // set memory read/write address
@@ -537,7 +589,7 @@ class CPU {
         let mv = this.reg[this.curReg];
         if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
         process.stdout.write(String.fromCharCode(mv));
-        this.reg.PC++;
+        this.reg.PC += 1;
     }
 
     /**
@@ -546,7 +598,7 @@ class CPU {
      */
     PRN() {
         console.log(this.reg[this.curReg]);
-        this.reg.PC++;
+        this.reg.PC += 1;
     }
 
     /**
@@ -1026,7 +1078,7 @@ module.exports = CPU;
        /    /                /    //    #/------\  *&#\
       /    /______  ________/    /|     #|______|   *&#|
      /           / /            /  \     #######   *&#/
-    |___________/  \___________/    \_____________&##/
+    |___________/  \___________/    \____________%&##/
 
 
 
