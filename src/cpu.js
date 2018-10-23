@@ -122,7 +122,7 @@ class CPU {
             INTR: false,
             EQLS: false,
             BOOL: false,
-            DEBUG: true
+            DEBUG: false
 
         };
         // Set carryover flag
@@ -279,7 +279,7 @@ class CPU {
      * startClock
      */
     startClock() {
-        const time = this.flags.DEBUG ? 10 : 6;
+        const time = this.flags.DEBUG ? 200 : 6;
         this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, time);
     }
 
@@ -621,6 +621,22 @@ class CPU {
         const m1 = this.membus.DATA();                              // read membus data
         // const m1 = this.mem[this.reg.PC + 1];
         this.reg.PC = m1;
+    }
+
+    /**
+     * Jump to a supplied memory address if REG_1 and REG_2 are equal.
+     * @method JREQ
+     */
+    JREQ() {
+        
+    }
+
+    /**
+     * Jump to a supplied memory address if REG_1 and REG_2 are not equal.
+     * @method JRNEQ
+     */
+    JRNEQ() {
+      
     }
 
     /**

@@ -1,0 +1,84 @@
+# This program was written by Donnie Reese for the LS8 emulator
+# It boots to a waiting state and prints whatever keyboard input
+# a user types onto the display.
+#/dT:h2;
+FE # INITALK
+60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------------------
+20 # SETI               + Set interrupt address to memory location
+00 #   INT_ADDR = 0     + Interrupt 0 is always the keyboard
+04 #   ADDR = 4         + The address for the interrupt code
+11 # JMP                + Jump to memory address
+1B # MEM_ADDR = 27      + Memory address to jump to
+60 # LABEL: -- [ PROGRAM VARIABLES ] ------------------------------------------------------
+FF # 
+FF # 
+FF # 
+FF # 
+FF # 
+60 # LABEL: -- [ KEYBOARD INTERRUPT ] -----------------------------------------------------
+02 # SETR               + set current register address
+03 #   REG_ADDR = 3     + register address
+7E # INPT               + read current value from interrupt buffer into register 3
+00 #   EXT_ADDR = 0     + extension address for subroutine
+41 # PRA                + print alpha-numeric character in register
+60 #.. # read display cursor x pos into register 1
+60 #.. # read
+60 #.. # read display cursor y pos into register 5
+60 #.. # read the value at memory location 2 into register 1
+60 #.. # read register 4 into register 1
+60 #.. # read the integer 1 into register 2
+60 #.. # sum
+0B # RET                + Return from Interrupt subroutine
+60 # LABEL: -- [ MAIN PROGRAM LOOP ] ------------------------------------------------------
+02 # SETR
+04 #   REG_ADDR = 4
+08 # LD
+48 #   MEM_VAL = 72
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+45 #   MEM_VAL = 69
+41 # PRA                + print alpha-numeric character in register 
+08 # LD
+4C #   MEM_VAL = 76
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+4C #   MEM_VAL = 76
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+4F #   MEM_VAL = 79
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+2C #   MEM_VAL = 44
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+20 #   MEM_VAL = 32
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+57 #   MEM_VAL = 87
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+4F #   MEM_VAL = 79
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+52 #   MEM_VAL = 82
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+4C #   MEM_VAL = 76
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+44 #   MEM_VAL = 68
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+2E #   MEM_VAL = 46
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+0A #   MEM_VAL = 10
+41 # PRA                + print alpha-numeric character in register
+08 # LD
+0D #   MEM_VAL = 13
+41 # PRA                + print alpha-numeric character in register
+5E # PASS               + Pass manually to beginning of loop
+1B # MEM_ADDR = 27      + Address for beginning of loop
+60 # LABEL: -- [ PROGRAM ERROR ] ----------------------------------------------------------
+60 # LABEL: -- [ PROGRAM EXIT ] -----------------------------------------------------------
+00 # HALT
