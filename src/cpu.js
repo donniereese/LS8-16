@@ -48,6 +48,8 @@ const JMP   = 0b00010001;   // Jump to memory
 const JTL   = 0b00011110;   // Jump to previous label
 const JEQ   = 0b00010100;   // Jump if equal
 const JNE   = 0b00010101;   // Jump if not equal
+const JRNE  = 0b10010101;   // Jump to register if not equal
+const JREQ  = 0b10010111;   // Jump to register if equal
 const CMP   = 0b00010110;   // Compare
 
 // Logical Structuring extensions
@@ -201,6 +203,8 @@ class CPU {
         if (JEQ) bt[JEQ] = this.JEQ;
         if (JNE) bt[JNE] = this.JNE;
         if (CMP) bt[CMP] = this.CMP;
+        if (JREQ) bt[JREQ] = this.JREQ;
+        if (JRNE) bt[JRNE] = this.JRNE;
         // Look for Load and store extensions
         if (LD) bt[LD] = this.LD;
         if (ST) bt[ST] = this.ST;
@@ -336,15 +340,10 @@ class CPU {
             // this.POP();
             // console.log('PC: ', this.reg.PC);
         }
-
-
         // run instructions...
-        // const currentInstruction = this.mem[this.reg.PC];
         this.membus.ADDR = this.reg.PC;                             // set read/write memory address
         this.membus.READ();                                         // read memory location
         const currentInstruction = this.membus.DATA();              // read data from membus
-        // console.log(currentInstruction);
-        // console.log(`EXEC@${this.reg.PC}::`, currentInstruction.toString(16));
         // if (this.reg.PC <= 23 && this.reg.PC >= 8) {
         //     // this is LABEL country, so basically symbolic links.  jump to that address.
         //     this .reg.PC = currentInstruction;
@@ -364,8 +363,17 @@ class CPU {
 
         if (handler === undefined) {
             console.error('ERROR: invalid instruction ' + currentInstruction);
+            console.error(`PC:${this.reg.PC};`);
+            console.error(`Memory Value: 0x${this.membus.DATA().toString(16)}`);
             console.log('MEMORY STACK:\n');
-            //console.log('ROM:\n', this.membus.banks[0]._bank);
+            console.log('ROM:\n');
+            const st = this.reg.PC - 5;
+            this.membus.banks[0]._bank.slice(this.reg.PC - 5, this. reg.PC + 10).forEach((line, i) => {
+              const ln = st+i;
+              const b = line.toString(2).padStart(8, '0');
+              const marker = (this.reg.PC === ln) ? ' ERR > ' : '       ';
+              console.log(`${marker}${ln.toString().padStart(3, '0')}: 0x${line.toString(16).padStart(2, '0')}  0b${b}`);
+            });
             //console.log('MEM:\n', this.membus.banks[1]._bank);
             this.stopClock();
             return;
@@ -443,6 +451,7 @@ class CPU {
      *
      */
     INITALK() {
+    console.log('INITALK')
         this.flags.INTR = false;
         this.flags.DEBUG = true;
         this.curReg = 0;
@@ -624,19 +633,33 @@ class CPU {
     }
 
     /**
-     * Jump to a supplied memory address if REG_1 and REG_2 are equal.
+     * Jump to a supplied memory address at REG_POINTER if REG_1 and REG_2 are equal.
      * @method JREQ
      */
     JREQ() {
-        
+        if (this.reg[1] === this.reg[2]) {
+          this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
+          this.membus.READ();                                         // read memory
+          const m1 = this.membus.DATA();                              // read membus data
+          // const m1 = this.mem[this.reg.PC + 1];
+          this.reg.PC = m1;
+        }
+        this.reg.PC += 2;
     }
 
     /**
-     * Jump to a supplied memory address if REG_1 and REG_2 are not equal.
-     * @method JRNEQ
+     * Jump to a supplied memory address at REG_POINTER if REG_1 and REG_2 are not equal.
+     * @method JRNEQ[<64;112;34M[<64;112;34M]]
      */
     JRNEQ() {
-      
+      if (this.reg[1] !== this.reg[2]) {
+          this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
+          this.membus.READ();                                         // read memory
+          const m1 = this.membus.DATA();                              // read membus data
+          // const m1 = this.mem[this.reg.PC + 1];
+          this.reg.PC = m1;      
+      }
+      this.reg.PC += 2;
     }
 
     /**

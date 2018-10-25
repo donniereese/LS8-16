@@ -2,13 +2,13 @@
 # It boots to a waiting state and prints whatever keyboard input
 # a user types onto the display.
 #/dT:h2;
-FE # INITALK
+01 # INIT
 60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------------------
 20 # SETI                   + Set interrupt address to memory location
 00 #   INT_ADDR = 0         + Interrupt 0 is always the keyboard
-04 #   ADDR = 4             + The address for the interrupt code
+0D #   ADDR = 13             + The address for the interrupt code
 11 # JMP                    + Jump to memory address
-1B # MEM_ADDR = 27          + Memory address to jump to
+2D # MEM_ADDR = 45          + Memory address to jump to
 60 # LABEL: -- [ PROGRAM VARIABLES ] ------------------------------------------------------
 00 # ERROR_CODE
 00 # 
@@ -16,12 +16,12 @@ FE # INITALK
 00 # 
 00 # 
 60 # LABEL: -- [ KEYBOARD INTERRUPT ] -----------------------------------------------------
-.. #                        + load INPUT_COUNTER
-.. #                        + add 1 to INPUT_COUNTER
-.. #                        + compare result to hard-coded max length
-.. #                        + if true, set ERROR_CODE
-.. #                        + if true, jump to PROGRAM_ERROR
-.. #                        + if false, continue
+60 #                        + load INPUT_COUNTER
+60 #                        + add 1 to INPUT_COUNTER
+60 #                        + compare result to hard-coded max length
+60 #                        + if true, set ERROR_CODE
+60 #                        + if true, jump to PROGRAM_ERROR
+60 #                        + if false, continue
 02 # SETR                   + set current register address
 03 #   REG_ADDR = 3         + register address
 7E # INPT                   + read current value from interrupt buffer into register 3
@@ -49,25 +49,25 @@ FE # INITALK
 00 # 
 60 # LABEL: -- [ MAIN PROGRAM LOOP ] ------------------------------------------------------
 02 # SETR                   +
-   #   REG_ADDR = 1         + 
-   # LDRI                   + Load INPUT_COUNTER into CUR_REG
-   #   MEM_ADDR = __        + 
+01 #   REG_ADDR = 1         + 
+12 # LDRI                   + Load INPUT_COUNTER into CUR_REG
+1C #   MEM_ADDR = 28        + 
 02 # SETR                   + 
-   #   REG_ADDR = 2         + 
-   # LDRI                   + Load LAST_COUNT into CUR_REG
-   #   MEM_ADDR = __        + 
-   # JREQ                   + If equal, no character, so jump
-   #   MEM_ADDR = 45        + 
+02 #   REG_ADDR = 2         + 
+12 # LDRI                   + Load LAST_COUNT into CUR_REG
+1B #   MEM_ADDR = 27        + 
+97 # JREQ                   + If equal, no character, so jump
+2D #   MEM_ADDR = 45        + 
 02 # SETR                   + Set Register to load MEM_ADDR for LAST_CHAR into REG_1
-   #   REG_ADDR = 1         + 
-   # LDRI                   + Load contents of memory directly into register 
-   #   MEM_ADDR = 47        + 
+01 #   REG_ADDR = 1         + 
+12 # LDRI                   + Load contents of memory directly into register 
+25 #   MEM_ADDR = 47        + 
 02 # SETR                   + Set to REG_2
-   #   REG_ADDR = 2         + 
-   # LD                     + load LB_CHAR into REG_2
-   #   MEM_VAL = __         + Value in memory for LB_CHAR
-   # JRNEQ                  + Jump if REG_1 and REG_2 are !EQUAL to handle Return/Enter key
-   #   MEM_ADDR = __        + Memory address to jump to
+02 #   REG_ADDR = 2         + 
+08 # LD                     + load LB_CHAR into REG_2
+13 #   MEM_VAL = 13         + Value in memory for LB_CHAR
+95 # JRNE                   + Jump if REG_1 and REG_2 are !EQUAL to handle Return/Enter key
+2D #   MEM_ADDR = 45        + Memory address to jump to
 60 # LABEL: -- [ Handle Return/Enter Key Press ] ------------------------------------------
    #
    #
@@ -81,7 +81,7 @@ FE # INITALK
 08 # LD
 48 #   MEM_VAL = 72
 41 # PRA                    + print alpha-numeric character in register
-   # JMP                    + Jump to memory address
+11 # JMP                    + Jump to memory address
    #   MEM_ADDR = 45        + Address to jump to
    #                        + 
 60 #.. # read display cursor x pos into register 1
