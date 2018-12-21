@@ -1,4 +1,9 @@
+// Node Readline
+const readline = require('readline');
+// Clogger loging
+const Clogger = require('sys/core/Clogger.js');
 // const config = require('conf.js');
+
 
 // Memory
 const MEM = require('./memory');
@@ -15,7 +20,8 @@ const PRN     = 0b00000110;   //
 const HALT    = 0b00000000;   //
 
 // Output Extension
-const PRA   = 0b01000001;   //
+const PRAR  = 0b01000001;   //
+const PRAM  = 0b01000010;
 
 // Universal Ext. Commands  //
 // const EXTDO = 0b11000000;   // Issue {extension#} a {extension Command}
@@ -91,6 +97,37 @@ const SP = 240; // stack poointer in register 1015, 8 - max 1023
 
 class CPU {
     constructor(ext, bus = []) {
+        // Configure readline
+        this.term = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout
+        });
+        
+        // Config options
+        this.settings = {
+            terminal: {
+                width: null,
+                height: null,
+                pos: {
+                    x: null,
+                    y: null
+                }
+            },
+            emulator: {
+                width: null,
+                height: null,
+                pos: {
+                    x: null,
+                    y: null
+                }
+            }
+        }
+
+        // Clogger -- graphical content loggger
+        this.c = new Clogger();
+
+        this.thread = [];
+        
         // Set Registry connections
         this.regBusAddr = new BUS(4);
         this.regBusData = new BUS(4);
@@ -129,6 +166,21 @@ class CPU {
         };
         // Set carryover flag
         this.CO = 0;
+
+        // Math ALU Flags
+        this.MATH = {};
+        // Ongoing Operation flag
+        this.MATH.OP = false;
+        // Finished Operation flag
+        this.MATH.FINAL = false;
+        // Equality flag
+        this.MATH.EQLS = false;
+        // Negative flag
+        this.MATH.NEG = false;
+        // Overflow flag
+        this.MATH.OVRFLW = false;
+        // Exponent value
+        this.MATH.EXPN = 0;
 
         // Set SRM to rom
         this.reg.SRM = 0b00010001;
@@ -193,7 +245,8 @@ class CPU {
         };
 
         // Look for Output extensions
-        if (PRA) bt[PRA] = this.PRA;
+        if (PRAR) bt[PRAR] = this.PRAR;
+        if (PRAM) bt[PRAM] = this.PRAM;
         // Look for Math extension
         if (ADD) bt[ADD] = this.ADD;
         if (SUB) bt[SUB] = this.SUB;
@@ -256,7 +309,33 @@ class CPU {
         this.loadscreen = loadscreen;
 
         //loadscreen.forEach(line => console.log(line));
+        // Set the screen to clear
         this.write('\x1b[2J');
+        // Set position to 0, 0
+        readline.cursorTo(this.term.output, 0,0);
+    }
+
+    util_getSize() {
+    	if ( this.stdout.columns && this.stdout.rows ) {
+    		this.settings.terminal.width = this.stdout.columns ;
+    		this.settings.terminal.height = this.stdout.rows ;
+    	}
+    
+    	//this.emit( 'resize' , this.width , this.height ) ;
+    }
+
+    util_getColumn() { return this.settings.terminal.pos.x; }
+
+    util_setColumn(x) {
+        this.settings.terminal.pos.x = x;
+    }
+
+    util_getRow() {
+        
+    }
+
+    util_setRow() {
+        
     }
 
     /**
@@ -301,21 +380,50 @@ class CPU {
     }
 
     /**
+     * clog -- console logs stats
+     * 
+     */
+    clog(str) {
+        this.cw(c.ch.storePos);
+        
+        this.cw(c.ch.resetPos);
+    }
+
+    /**
+     * cw -- console write
+     * 
+     */
+    cw(str) {
+        process.stdout.write(str);
+    }
+
+    /**
      * tick
      *
      */
     tick() {
+        
+        // If not load-complete, process
         if (!this.loaded) {
-          process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
-          this.loadedPos++;
-          if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
-            this.loadedRow++;
-            this.loadedPos = 0;
-            process.stdout.write('\n');
-          }
-          if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
-          return;
+            // write the next character in load-screen memory
+            process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
+            // increment the loadPos row counter
+            this.loadedPos++;
+            // if it's greater than the row length, increment to the next row
+            if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
+                // Increment row
+                this.loadedRow++;
+                // Reset row position
+                this.loadedPos = 0;
+                // start on new line of the output
+                process.stdout.write('\n');
+            }
+            // if it's past the load-memory, flip load-complete flag
+            if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
+            // skip to next tick
+            return;
         }
+        // Is the Interupt flag thrown?
         if (this.flags.INTR === true && !this.flags.INST) {
             // console.log('PC: ', this.reg.PC);
             // this.PUSH();
@@ -389,45 +497,67 @@ class CPU {
      * @param  {[type]} r1   [description]
      * @return {[type]}      [description]
      */
-    alu(func, r0, r1, sv = false) {
+    alu(func, r0 = 2, r1 = 1, sv = false) {
+        let output = 0;
+        // Reset the Operation flag and all other MATH flags
+        if (!this.OP || this.MATH.FINAL) {
+            this.MATH.OP = true;
+            this.MATH.FINAL = false;
+            this.MATH.EQLS = false;
+            this.MATH.NEG = false;
+            this.MATH.OVRFLW = false;
+            this.MATH.EXPN = 0;
+        }
+        // Main operation switch
         switch (func) {
+            // increment number
             case 'INC':
-                // increment number
-                this.reg[r0]++;
-                // check if out of bounds
-                if (this.reg[r0] > 255)
-                    this.reg[r0] = 255;
-                    break;
+                output = this.reg[r0] + 1;
+                break;
+            // Decrement number
             case 'DEC':
-                // Decrement number
-                this.reg[r0]--;
-                // check if out of bounds
-                if (this.reg[r0] < 0)
-                    this.reg[r0] = 255;
-                    break;
+                output = this.reg[r0] - 1;
+                break;
             case 'ADD':
-                if (!sv) return this.reg[r0] + this.reg[r1];
-                const a = r0 + r1;
-                return (a <= 255) ? r0 + r1 : a - 255;
+                output = !sv ? this.reg[1] + this.reg[2] : r0 + r1;
                 break;
             case 'SUB':
-                if (!sv) return this.reg[r0] - this.reg[r1];
-                const s = r0 - r1;
-                return (s >= 0) ? r0 - r1 : 256 + s;
+                output = !sv ? this.reg[2] - this.reg[1] : r1 - r0;
                 break;
             case 'MUL':
-                if (!sv) return this.reg[r0] * this.reg[r1];
-                return r0 * r1;
+                output = !sv ? this.reg[2] * this.reg[1] : r1 * r0;
                 break;
             case 'DIV':
-                if (!sv) return this.reg[r0] / this.reg[r1];
-                return r0 / r1;
+                output = !sv ? this.reg[2] / this.reg[1] : r1 / r0;
                 break;
             case 'CMP':
-                if (!sv) return this.reg[r0] === this.reg[r1];
-                return r0 === r1;
+                output = !sv ? this.reg[2] === this.reg[1] : r1 === r0;
+                output = +output;
+                this.MATH.EQLS = output;
                 break;
         }
+
+        if (func != 'CMP' && output < 0) {
+            output = Math.abs(output);
+            this.MATH.NEG = true;
+        }
+        // If the number is greater than 
+        if (func != 'CMP' && output > 255) {
+            // Get the exponent that the value could be multiplied by
+            let exp = Math.floor(output / 256);
+            // Max it out at 255
+            exp = Math.min(99, exp);
+            // Set the output to the remainder after the exponent is taken out
+            output = output  % 256;
+            // Set the OVERFLOW flag
+            this.MATH.OVRFLW = true;
+            // Set the EXPN catch
+            this.MATH.EXPN = exp;
+        }
+        // Set the ACCUMULATOR
+        this.reg[2] = output;
+        // Optionally return the output
+        return output;
     }
 
     /**
@@ -510,16 +640,15 @@ class CPU {
      * @method MULL
      */
     MUL() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
-        this.reg[this.curReg] = this.alu('MUL', m1, m2);
-        this.reg.PC += 3;
+        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+        // this.membus.READ();                                         // read memory
+        // const m1 = this.membus.DATA();                              // get memory read data
+        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+        // this.membus.READ();                                         // read memory
+        // const m2 = this.membus.DATA();                              // get memory read data
+        // this.reg[this.curReg] = this.alu('MUL', m1, m2);
+        this.alu('MUL');
+        this.reg.PC += 1;
     }
 
     /**
@@ -527,23 +656,27 @@ class CPU {
      * @method DIV
      */
     DIV() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
-        this.reg[this.curReg] = this.alu('DIV', m1, m2);
-        this.reg.PC += 3;
+        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+        // this.membus.READ();                                         // read memory
+        // const m1 = this.membus.DATA();                              // get memory read data
+        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+        // this.membus.READ();                                         // read memory
+        // const m2 = this.membus.DATA();                              // get memory read data
+        // this.reg[this.curReg] = this.alu('DIV', m1, m2);
+        this.alu('DIV')
+        this.reg.PC += 1;
+    }
+
+    ADD() {
+      this.alu('ADD');
+      this.reg.PC += 1;
     }
 
     /**
      * add two concurrent numbers together and place in current registry
      * @method ADD
      */
-    ADD() {
+    ADDER() {
         this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
         this.membus.READ();                                         // read memory
         const m1 = this.membus.DATA();                              // get memory read data
@@ -561,16 +694,15 @@ class CPU {
      * @method SUB
      */
     SUB() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
-        this.reg[this.curReg] = this.alu('SUB', m1, m2);
-        this.reg.PC += 3;
+        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+        // this.membus.READ();                                         // read memory
+        // const m1 = this.membus.DATA();                              // get memory read data
+        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+        // this.membus.READ();                                         // read memory
+        // const m2 = this.membus.DATA();                              // get memory read data
+        // this.reg[this.curReg] = this.alu('SUB', m1, m2);
+        this.alu('SUB');
+        this.reg.PC += 1;
     }
 
     /**
@@ -578,23 +710,33 @@ class CPU {
      * @method CMP
      */
     CMP() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
-        this.reg[this.curReg] = this.alu('CMP', m1, m2);
-        this.reg.PC += 3;
+        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+        // this.membus.READ();                                         // read memory
+        // const m1 = this.membus.DATA();                              // get memory read data
+        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+        // this.membus.READ();                                         // read memory
+        // const m2 = this.membus.DATA();                              // get memory read data
+        // this.reg[this.curReg] = this.alu('CMP', m1, m2);
+        this.alu('MP');
+        this.reg.PC += 1;
     }
 
     /**
-     * (PR)int (A)lpha-numeric char
-     * @method PRA
+     * (PR)int (A)lpha-numeric char from Register
+     * @method PRAR
      */
-    PRA() {
+    PRAR() {
+        let mv = this.reg[this.curReg];
+        if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
+        process.stdout.write(String.fromCharCode(mv));
+        this.reg.PC += 1;
+    }
+
+    /**
+     * (PR)int (A)lpha-numeric char from memory
+     * @method PRAM
+     */
+    PRAM() {
         let mv = this.reg[this.curReg];
         if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
         process.stdout.write(String.fromCharCode(mv));
@@ -667,14 +809,28 @@ class CPU {
      * @method JEQ
      */
     JEQ() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    // Version 1 -- accepts 3 args, 1,2 for Register addresses, 3 for the memory jump address
+        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+        // this.membus.READ();                                         // read memory
+        // const m1 = this.membus.DATA();                              // get memory read data
+        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+        // this.membus.READ();                                         // read memory
+        // const m2 = this.membus.DATA();                              // get memory read data
+        // // const m1 = this.mem[this.reg.PC + 1];
+        // // const m2 = this.mem[this.reg.PC + 2];
+        // if (m1 === m2) {
+        //     this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
+        //     this.membus.READ();                                     // read memory
+        //     this.reg.PC = this.membus.DATA();                       // read membus data
+        //     // this.reg.PC = this.mem[this.reg.PC + 3];
+        // } else {
+        //    this.reg.PC += 4;
+        // }
+    // Version 2 -- accepts only jump address and looks at accumulator and math argument registers (1,2)
+        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for JUMP_ADDR
         this.membus.READ();                                         // read memory
         const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
+        this.alu()
         if (m1 === m2) {
             this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
             this.membus.READ();                                     // read memory

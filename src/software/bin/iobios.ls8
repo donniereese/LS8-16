@@ -3,84 +3,102 @@
 # a user types onto the display.
 #/dT:h2;
 01 # INIT
-60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------------------
+60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------+
 20 # SETI                   + Set interrupt address to memory location
 00 #   INT_ADDR = 0         + Interrupt 0 is always the keyboard
-0D #   ADDR = 13             + The address for the interrupt code
+0D #   ADDR = 13            + The address for the interrupt code
 11 # JMP                    + Jump to memory address
-2D # MEM_ADDR = 45          + Memory address to jump to
-60 # LABEL: -- [ PROGRAM VARIABLES ] ------------------------------------------------------
-00 # ERROR_CODE
+39 # MEM_ADDR = 57          + Memory address to jump to
+60 # LABEL: -- [ PROGRAM VARIABLES ] ------------------------------------------+
+00 # ERROR_CODE             + 
+00 #                        + 
+00 #                        + 
+00 #                        + 
+60 # LABEL: -- [ INPUT BUFFER OF MAX SIZE 16 ] --------------------------------+
+00 # LAST_COUNT          $2 + program read pointer
+00 # INPUT_COUNTER       $1 + length of the input
 00 # 
 00 # 
 00 # 
 00 # 
-60 # LABEL: -- [ KEYBOARD INTERRUPT ] -----------------------------------------------------
-60 #                        + load INPUT_COUNTER
-60 #                        + add 1 to INPUT_COUNTER
-60 #                        + compare result to hard-coded max length
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+00 # 
+60 # LABEL: -- [ KEYBOARD INTERRUPT ] -----------------------------------------+
+02 # SETR                   + set REG_ADDR
+02 #   REG_ADDR = 2         + to ACCUMULATOR
+12 # LDRI                   + load INPUT_COUNTER into REG_ADDR
+@1 #   MEM_ADDR = @1        + from MEM_ADDR for INPUT_COUNTER
+02 # SETR                   + set REG_ADDR
+01 #   REG_ADDR = 1         + to MATH_ARG
+08 # LD                     + Load MEM_VAL into REG_ADDR
+01 #   MEM_VAL = 1          + for value to increment the ACCUMULATOR
+0C # ADD                    + add 1 to ACCUMULATOR for INPUT_COUNTER
+02 # SETR                   + set REG_ADDR
+01 #   REG_ADDR = 1         + to MATH_ARG
+08 # LD                     + Load MEM_VAL into REG_ADDR
+10 #   MEM_VAL = 16         + for comparison against ACCUMULATOR
+14 # JEQ                    + Jump if the count is at max length
+3E #   MEM_ADDR = @4        + to the location of how to handle a return
+60 #                        + 
 60 #                        + if true, set ERROR_CODE
 60 #                        + if true, jump to PROGRAM_ERROR
 60 #                        + if false, continue
 02 # SETR                   + set current register address
 03 #   REG_ADDR = 3         + register address
-7E # INPT                   + read current value from interrupt buffer into register 3
+7E # INPT                   + read value from interrupt buffer into CUR_REG
 00 #   EXT_ADDR = 0         + extension address for subroutine
-60 # PRA (originally 41)    + print alpha-numeric character in register
+60 # PRAR (originally 41)   + print alpha-numeric character in register
 0B # RET                    + Return from Interrupt subroutine
-60 # LABEL: -- [ INPUT BUFFER OF MAX SIZE 16 ] --------------------------------------------
-00 # LAST_COUNT             + program read pointer
-00 # INPUT_COUNTER          + length of the input
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-00 # 
-60 # LABEL: -- [ MAIN PROGRAM LOOP ] ------------------------------------------------------
+60 # LABEL: $3 [ MAIN PROGRAM LOOP ] ------------------------------------------+
 02 # SETR                   +
 01 #   REG_ADDR = 1         + 
 12 # LDRI                   + Load INPUT_COUNTER into CUR_REG
-1C #   MEM_ADDR = 28        + 
+@1 #   MEM_ADDR = @1        + 
 02 # SETR                   + 
 02 #   REG_ADDR = 2         + 
 12 # LDRI                   + Load LAST_COUNT into CUR_REG
-1B #   MEM_ADDR = 27        + 
+@2 #   MEM_ADDR = @2        + 
 97 # JREQ                   + If equal, no character, so jump
 2D #   MEM_ADDR = 45        + 
-02 # SETR                   + Set Register to load MEM_ADDR for LAST_CHAR into REG_1
+02 # SETR                   + Set CUR_REG from MEM_ADDR for LAST_CHAR into REG_1
 01 #   REG_ADDR = 1         + 
 12 # LDRI                   + Load contents of memory directly into register 
-25 #   MEM_ADDR = 47        + 
+@2 #   MEM_ADDR = @2        + 
 02 # SETR                   + Set to REG_2
 02 #   REG_ADDR = 2         + 
 08 # LD                     + load LB_CHAR into REG_2
 13 #   MEM_VAL = 13         + Value in memory for LB_CHAR
-95 # JRNE                   + Jump if REG_1 and REG_2 are !EQUAL to handle Return/Enter key
-2D #   MEM_ADDR = 45        + Memory address to jump to
-60 # LABEL: -- [ Handle Return/Enter Key Press ] ------------------------------------------
-   #
-   #
-   #
-60 # LABEL: -- [ Handle Character Key Press ] ---------------------------------------------
-   #
-   #
-   #
-02 # SETR
-01 #   REG_ADDR = 1
-08 # LD
-48 #   MEM_VAL = 72
-41 # PRA                    + print alpha-numeric character in register
+95 # JRNE                   + Jump if REG_1, REG_2 are !EQUAL for RETURN key
+@3 #   MEM_ADDR = @3        + Memory address to jump to
+60 # LABEL: $4 [ HAndle full input buffer w/o Return/Enter Key Press ] --------+
+   #                        + 
+   #                        + 
+   #                        + 
+   #                        + 
+60 # LABEL: -- [ Handle Return/Enter Key Press ] ------------------------------+
+   #                        + 
+   #                        + 
+   #                        + 
+   #                        + 
+60 # LABEL: -- [ Handle Character Key Press ] ---------------------------------+
+   #                        + 
+   #                        + 
+   #                        + 
+02 # SETR                   + 
+01 #   REG_ADDR = 1         + 
+08 # LD                     + 
+48 #   MEM_VAL = 72         +
+41 # PRAR                   + print alpha-numeric character in register
 11 # JMP                    + Jump to memory address
    #   MEM_ADDR = 45        + Address to jump to
    #                        + 
@@ -93,6 +111,26 @@
 60 #.. # sum
 5E # PASS                   + Pass manually to beginning of loop
 1B # MEM_ADDR = 27          + Address for beginning of loop
-60 # LABEL: -- [ PROGRAM ERROR ] ----------------------------------------------------------
-60 # LABEL: -- [ PROGRAM EXIT ] -----------------------------------------------------------
+60 # LABEL: $9 [ PROGRAM ERROR ] ----------------------------------------------+
+42 # PRAM                   + 
+45 #   MEM_VAL = 45         + 0x45 = 69 = E
+42 # PRAM                   + 
+52 #                        + 0x52 = 82 = R
+42 # PRAM                   + 
+52 #                        + 0x52 = 82 = R
+42 # PRAM                   + 
+4F #                        + 0x4F = 79 = O
+42 # PRAM                   + 
+52 #                        + 0x52 = 82 = R
+42 # PRAM                   + 
+31 #                        + 0x31 = 49 = !
+60 # LABEL: -- [ PROGRAM EXIT ] -----------------------------------------------+
+42 # PRAM                   + 
+45 #   MEM_VAL = 45         + 0x45 = 69 = E
+42 # PRAM                   + 
+58 #                        + 0x58 = 88 = x
+42 # PRAM                   + 
+49 #                        + 0x49 = 73 = i
+42 # PRAM                   + 
+54 #                        + 0x54 = 84 = t
 00 # HALT

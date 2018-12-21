@@ -121,8 +121,8 @@ slower and separately from the faster CPU cycl
           | LD       | 08  | 00001000 |                         |#| LBCLR    |     |          |                         |
           | ST       | 09  | 00001001 |                         |#| JMPM     |     |          | ADDR                    |
           | LDRI     | 12  | 00010010 |                         |#| JMPR     |     |          | ADDR                    |
-          | STRI     | 13  | 00010011 |                         |#|          |     |          |                         |
-          | STOR     | F5  | 11110101 |                         |#|          |     |          |                         |
+          | STRI     | 13  | 00010011 |                         |#| JREQ     | 97  |          |                         |
+          | STOR     | F5  | 11110101 |                         |#| JRNE     | 95  |          |                         |
           | LODM     | F7  | 11110111 |                         |#|          |     |          |                         |
           | ADD      | 0C  | 00001100 |                         |#|          |     |          |                         |
           | SUB      | 0D  | 00001101 |                         |#|          |     |          |                         |
