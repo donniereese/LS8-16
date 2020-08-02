@@ -1,0 +1,12 @@
+[
+    {"key": "ctrl+e", "cmd": "term.expression"},
+    {"key": "ctrl+q", "cmd": "term.quit"},
+    {"key": "down", "cmd": "screen.buffer.down"},
+    {"key": "up", "cmd": "screen.buffer.up"},
+    {"key": "up", "cmd": "term.command_history.last"},
+    {"key": "left", "cmd": "screen.buffer.line_left"},
+    {"key": "right", "cmd": "screen.buffer.line_right"},
+    {"key": "enter", "cmd": "term.command.submit"},
+    {"key": "esc", "cmd": "term.target_editor"},
+    {"key": "esc", "cmd": "editor.target_term"}
+]

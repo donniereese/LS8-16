@@ -1,13 +1,50 @@
 // Node Readline
 const readline = require('readline');
 // Clogger loging
-const Clogger = require('sys/core/Clogger.js');
+const Clogger = require('./sys/core/Clogger.js');
 // const config = require('conf.js');
-
+// CPU Instruction Constants
 
 // Memory
 const MEM = require('./memory');
 const BUS = require('./bus');
+
+
+
+class Dictionary {
+  constructor() {
+    this.codes = {};
+    this.instructions = {};
+  }
+
+  insert(code, instruction, description = '', args = []) {
+    this.codes[code] = instruction;
+    this.instructions[instruction] = {
+      code: code,
+      inst: instruction,
+      desc: description,
+      args: args,
+    }
+  }
+  getByCode (code) {
+    const i = this.codes[code];
+    if (!i) return undefined;
+    return this.getByInstruction(i);
+  }
+  
+  getByInstruction(inst) {
+    const i = this.instructions[inst];
+    if(!i) return undefined;
+    return this.instructions[i];
+  }
+}
+
+
+
+const dict = new Dictionary();
+
+
+
 
 const INIT    = 0b00000001;   // Initialize                   0x01
 const INITALK = 0b11111110;   // Initialize with Debug mode
@@ -90,9 +127,85 @@ const GECY   = 0b11010111;   // Get character cursor y
 const GECXY  = 0b11011000;   // Get Chatacter at x, y
 
 
+
+dict.insert(INIT, 'INIT', 'Initialization code for CPU')
+dict.insert(INITALK, 'INITALK', 'Initialization code for CPU with DEBUG mode')
+dict.insert(SETR, 'SETR', 'Set Register Pointer', ['Register Address'])
+dict.insert(GETR, 'GETR', 'Returns current value of current register')
+dict.insert(SAVE, 'SAVE', 'Saves the value in the argument to the current register location', ['Value to save'])
+dict.insert(LOAD, 'LOAD', 'Please review this.')
+dict.insert(MUL, 'MUL')
+dict.insert(DIV, 'DIV')
+dict.insert(ADD, 'ADD')
+dict.insert(SUB, 'SUB')
+dict.insert(PRN, 'PRN')
+dict.insert(HALT, 'HALT', 'Stops the CPU')
+dict.insert(PRAR, 'PRAR')
+dict.insert(PRAM, 'PRAM')
+dict.insert(LD, 'LD')
+dict.insert(ST, '')
+dict.insert(LDRI, '')
+dict.insert(STRI, '')
+dict.insert(STOR, '')
+dict.insert(LODM, '')
+dict.insert(ADD, '')
+dict.insert(SUB, '')
+dict.insert(DIV, '')
+
+// push / pop
+dict.insert(PUSH, '')
+dict.insert(POP, '')
+
+// call and return extensions
+dict.insert(CALL, '')
+dict.insert(RET, '')
+dict.insert(PASS, '')
+
+// Logic Extension
+dict.insert(JMP, '')
+dict.insert(JTL, '')
+dict.insert(JEQ, '')
+dict.insert(JNE, '')
+dict.insert(JRNE, '')
+dict.insert(JREQ, '')
+dict.insert(CMP, '')
+
+// Logical Structuring extensions
+dict.insert(LBL, '')
+dict.insert(LBJMP, '')
+dict.insert(LBSET, '')
+
+// Memory Control
+dict.insert(ADR, '')
+dict.insert(RAD, '')
+dict.insert(WAD, '')
+dict.insert(RADR, '')
+
+// Memory Management
+dict.insert(CPYR, '')
+
+// Interupts
+dict.insert(SETI, '')
+dict.insert(GETI, '')
+dict.insert(RETI, '')
+dict.insert(INPT, '')
+dict.insert(OTPT, '')
+
+// Display Extension
+dict.insert(SCORC, '')
+dict.insert(SCORX, '')
+dict.insert(SCORY, '')
+dict.insert(SCHAR, '')
+dict.insert(GECHR, '')
+dict.insert(GECX, '')
+dict.insert(GECY, '')
+dict.insert(GECXY, '')
+
+
 const SP = 240; // stack poointer in register 1015, 8 - max 1023
 // 240  241  242  243  244  245  246  247  248  249  250  251  252  253  254
 // stak                     IM   IS   ad8  ad7  ad6  ad5  ad4  ad3  ad2  ad1
+
 
 
 class CPU {
@@ -362,7 +475,8 @@ class CPU {
      * startClock
      */
     startClock() {
-        const time = this.flags.DEBUG ? 200 : 6;
+        //const time = this.flags.DEBUG ? 800 : 6;
+        const time = 6;
         this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, time);
     }
 
@@ -398,6 +512,29 @@ class CPU {
     }
 
     /**
+     *
+     */
+    splash() {
+      // write the next character in load-screen memory
+      process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
+      // increment the loadPos row counter
+      this.loadedPos++;
+      // if it's greater than the row length, increment to the next row
+      if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
+        // Increment row
+        this.loadedRow++;
+        // Reset row position
+        this.loadedPos = 0;
+        // start on new line of the output
+        process.stdout.write('\n');
+      }
+      // if it's past the load-memory, flip load-complete flag
+      if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
+      // skip to next tick
+      return;
+    }
+
+    /**
      * tick
      *
      */
@@ -405,24 +542,12 @@ class CPU {
         
         // If not load-complete, process
         if (!this.loaded) {
-            // write the next character in load-screen memory
-            process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
-            // increment the loadPos row counter
-            this.loadedPos++;
-            // if it's greater than the row length, increment to the next row
-            if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
-                // Increment row
-                this.loadedRow++;
-                // Reset row position
-                this.loadedPos = 0;
-                // start on new line of the output
-                process.stdout.write('\n');
-            }
-            // if it's past the load-memory, flip load-complete flag
-            if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
-            // skip to next tick
-            return;
+          this.splash();
+          return;
         }
+
+
+        
         // Is the Interupt flag thrown?
         if (this.flags.INTR === true && !this.flags.INST) {
             // console.log('PC: ', this.reg.PC);
@@ -448,6 +573,9 @@ class CPU {
             // this.POP();
             // console.log('PC: ', this.reg.PC);
         }
+
+
+        
         // run instructions...
         this.membus.ADDR = this.reg.PC;                             // set read/write memory address
         this.membus.READ();                                         // read memory location
@@ -461,13 +589,23 @@ class CPU {
         // this is the actual instruction
         const handler = this.branchTable[currentInstruction];
 
+
+        
+
         if (this.flags.DEBUG) {
+          const space = " ";
+        
           this.write('\x1b[s');
           this.write('\x1b[K');
+          this.write('\x1b[0;0H');
+          this.write(space.repeat(26));
           this.write('\x1b[0;0H');
           this.write(`PC:${this.reg.PC}  INSTRUCTION: ${currentInstruction.toString(16)}`);
           this.write('\x1b[u');
         }
+
+
+
 
         if (handler === undefined) {
             console.error('ERROR: invalid instruction ' + currentInstruction);
@@ -486,8 +624,13 @@ class CPU {
             this.stopClock();
             return;
         }
+
+
+        
         handler.call(this); // set this explicitly in handler
     }
+
+    
 
     /**
      * arithmatic logic unit

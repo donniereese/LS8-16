@@ -86,7 +86,7 @@ Clogger.prototype.clear = function() {
 }
 
 Clogger.prototype.out = function() {
-    process.stdout.write('\n' + this.body + '\n');
+    process.stdout.write(this.body);
     return this;
 }
 

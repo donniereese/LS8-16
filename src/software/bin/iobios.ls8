@@ -2,7 +2,7 @@
 # It boots to a waiting state and prints whatever keyboard input
 # a user types onto the display.
 #/dT:h2;
-01 # INIT
+FE # INIT
 60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------+
 20 # SETI                   + Set interrupt address to memory location
 00 #   INT_ADDR = 0         + Interrupt 0 is always the keyboard
