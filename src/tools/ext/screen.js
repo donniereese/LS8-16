@@ -15,6 +15,8 @@ class Screen {
         this.input = '';
         this.width = 0;
         this.height = 0;
+
+        this.getCurrentPosition.bind(this);
     }
 
     clear() { process.stdout.write(clearScreenCommand()) };
@@ -32,8 +34,18 @@ class Screen {
         this.cursor.pos(1, this.height - 1);
     }
 
+    getCurrentPosition(err, pos) {
+    	return pos;
+    }
+
     drawInput() {
         this.moveToInput();
+
+        const currentPos = this.cursor.curPos();
+
+		process.stdout.write(JSON.parse(JSON.stringify(currentPos)));
+
+		//this.cursor.pos(0, currentPos.row);
         this.cursor.clearLine();
     }
 

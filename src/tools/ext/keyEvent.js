@@ -14,6 +14,9 @@ class KeyEvent {
         this.shift = key.shift;
         this.name = key.name;
         this.code = key.code ? keycodes[key.code] : this.string;
+
+        this.letterNumber = /^[0-9a-zA-Z]+$/;
+        this.lineControlArr = ['enter', 'return', 'backspace', 'tab'];
     }
 
     get rule() {
@@ -25,6 +28,23 @@ class KeyEvent {
         str += this.name;
         
         return str;
+    }
+
+	modifierPressed() {
+		return this.ctrl || this.meta;
+	}
+
+    isAlphaNumber() {
+    	if(this.modifierPressed()) return false;
+		if(this.code.length !== 1) return false;
+    	if(!!this.code.match(this.letterNumber)) return true;
+    	return false;
+    }
+
+    isLineControl() {
+    	if (this.modifierPressed()) return false;
+    	if (this.lineControlArr.includes(this.rule)) return true;
+    	return false;
     }
 }
 

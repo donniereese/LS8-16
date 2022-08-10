@@ -8,198 +8,93 @@ const Clogger = require('./sys/core/Clogger.js');
 // Memory
 const MEM = require('./memory');
 const BUS = require('./bus');
+// Ext
+const EXT = require('./ext')
 
-
-
-class Dictionary {
-  constructor() {
-    this.codes = {};
-    this.instructions = {};
-  }
-
-  insert(code, instruction, description = '', args = []) {
-    this.codes[code] = instruction;
-    this.instructions[instruction] = {
-      code: code,
-      inst: instruction,
-      desc: description,
-      args: args,
-    }
-  }
-  getByCode (code) {
-    const i = this.codes[code];
-    if (!i) return undefined;
-    return this.getByInstruction(i);
-  }
-  
-  getByInstruction(inst) {
-    const i = this.instructions[inst];
-    if(!i) return undefined;
-    return this.instructions[i];
-  }
-}
-
-
-
-const dict = new Dictionary();
+const dict = new EXT.Dictionary();
 
 
 
 
-const INIT    = 0b00000001;   // Initialize                   0x01
+const INIT = 0b00000001;      // Initialize                   0x01
 const INITALK = 0b11111110;   // Initialize with Debug mode
-const SETR    = 0b00000010;   // Set Register                 0x02
-const GETR    = 0b01101111;   // Get Register Value
-const SAVE    = 0b00000100;   //
-const LOAD    = 0b00000111;   //
-const MUL     = 0b00000101;   //
-const PRN     = 0b00000110;   //
-const HALT    = 0b00000000;   //
+const SETR = 0b00000010;      // Set Register                 0x02
+const GETR = 0b01101111;      // Get Register Value
+const SAVE = 0b00000100;      //
+const LOAD = 0b00000111;      //
+const MUL = 0b00000101;       //
+const PRN = 0b00000110;       //
+const HALT = 0b00000000;      //
 
 // Output Extension
-const PRAR  = 0b01000001;   //
-const PRAM  = 0b01000010;
+const PRAR = 0b01000001;      //
+const PRAM = 0b01000010;
 
-// Universal Ext. Commands  //
-// const EXTDO = 0b11000000;   // Issue {extension#} a {extension Command}
-// const EXTRT = 0b11000001;   // Get {extension#} to return
+// Universal Ext. Commands    //
+// const EXTDO = 0b11000000;  // Issue {extension#} a {extension Command}
+// const EXTRT = 0b11000001;  // Get {extension#} to return
 
 // Load and store extensions
-const LD    = 0b00001000;   //
-const ST    = 0b00001001;   //
-const LDRI  = 0b00010010;   // LoaD Register Indirect
-const STRI  = 0b00010011;   // STore Register Indirect
-const STOR  = 0b11110101;   //
-const LODM  = 0b11110111;   //
+const LD = 0b00001000;        //
+const ST = 0b00001001;        //
+const LDRI = 0b00010010;      // LoaD Register Indirect
+const STRI = 0b00010011;      // STore Register Indirect
+const STOR = 0b11110101;      //
+const LODM = 0b11110111;      //
 
 // Math Extension
-const ADD   = 0b00001100;   // add two registers
-const SUB   = 0b00001101;   // subtract two registers
-const DIV   = 0b00001110;   // Divide two registers
+const ADD = 0b00001100;   // add two registers
+const SUB = 0b00001101;   // subtract two registers
+const DIV = 0b00001110;   // Divide two registers
 
 // push / pop
-const PUSH  = 0b00001010;   // Push onto stack
-const POP   = 0b00001011;   // pop off stack
+const PUSH = 0b00001010;   // Push onto stack
+const POP = 0b00001011;   // pop off stack
 
 // call and return extensions
-const CALL  = 0b00001111;   // Call subroutine
-const RET   = 0b00010000;   // Return from Call
-const PASS  = 0b01011110;   // Pass to a memory address without stack moving
+const CALL = 0b00001111;   // Call subroutine
+const RET = 0b00010000;   // Return from Call
+const PASS = 0b01011110;   // Pass to a memory address without stack moving
 
 // Logic Extension
-const JMP   = 0b00010001;   // Jump to memory
-const JTL   = 0b00011110;   // Jump to previous label
-const JEQ   = 0b00010100;   // Jump if equal
-const JNE   = 0b00010101;   // Jump if not equal
-const JRNE  = 0b10010101;   // Jump to register if not equal
-const JREQ  = 0b10010111;   // Jump to register if equal
-const CMP   = 0b00010110;   // Compare
+const JMP = 0b00010001;   // Jump to memory
+const JTL = 0b00011110;   // Jump to previous label
+const JEQ = 0b00010100;   // Jump if equal
+const JNE = 0b00010101;   // Jump if not equal
+const JRNE = 0b10010101;   // Jump to register if not equal
+const JREQ = 0b10010111;   // Jump to register if equal
+const CMP = 0b00010110;   // Compare
 
 // Logical Structuring extensions
-const LBL   = 0b01100000;   // Set a Label
+const LBL = 0b01100000;   // Set a Label
 const LBJMP = 0b00010111;   // Jump to label
 const LBSET = 0b00011000;   // set jump label
 
 // Memory Control
-const ADR   = 0b10111000;   // (ADR)ess a memory block for read and write.
-const RAD   = 0b11011001;   // Set (R)ead (AD)dress block
-const WAD   = 0b11011010;   // Set (W)rite (AD)dress block
-const RADR  = 0b11011011;   // (R)ead (ADR)ess for block
+const ADR = 0b10111000;   // (ADR)ess a memory block for read and write.
+const RAD = 0b11011001;   // Set (R)ead (AD)dress block
+const WAD = 0b11011010;   // Set (W)rite (AD)dress block
+const RADR = 0b11011011;   // (R)ead (ADR)ess for block
 
 // Memory Management
-const CPYR  = 0b11000011;   // Copy Recursive from range to another range
+const CPYR = 0b11000011;   // Copy Recursive from range to another range
 
 // Interupts
-const SETI  = 0b00100000;   // Set Interrupt Address
-const GETI  = 0b00100001;   // Get Interrupt Address
-const RETI  = 0b11101110;   // (RET)urn from {I}nterupt
-const INPT  = 0b01111110;   // Read extension Buffer
-const OTPT  = 0b01111111;   // Place on extension buffer
+const SETI = 0b00100000;   // Set Interrupt Address
+const GETI = 0b00100001;   // Get Interrupt Address
+const RETI = 0b11101110;   // (RET)urn from {I}nterupt
+const INPT = 0b01111110;   // Read extension Buffer
+const OTPT = 0b01111111;   // Place on extension buffer
 
 // Display Extension
-const SCORC  = 0b11010000;   // Set Character column and row (next two args) then character (3rd arg)
-const SCORX  = 0b11010001;   // Set X coord for the character buffer writing
-const SCORY  = 0b11010010;   // set the y coord for the character buffer writing
-const SCHAR  = 0b11010011;   // Set the char to write at the coords targeted
-const GECHR  = 0b11010100;   // Get character from set x and y
-const GECX   = 0b11010101;   // Get Character cursor x
-const GECY   = 0b11010111;   // Get character cursor y
-const GECXY  = 0b11011000;   // Get Chatacter at x, y
-
-
-
-dict.insert(INIT, 'INIT', 'Initialization code for CPU')
-dict.insert(INITALK, 'INITALK', 'Initialization code for CPU with DEBUG mode')
-dict.insert(SETR, 'SETR', 'Set Register Pointer', ['Register Address'])
-dict.insert(GETR, 'GETR', 'Returns current value of current register')
-dict.insert(SAVE, 'SAVE', 'Saves the value in the argument to the current register location', ['Value to save'])
-dict.insert(LOAD, 'LOAD', 'Please review this.')
-dict.insert(MUL, 'MUL')
-dict.insert(DIV, 'DIV')
-dict.insert(ADD, 'ADD')
-dict.insert(SUB, 'SUB')
-dict.insert(PRN, 'PRN')
-dict.insert(HALT, 'HALT', 'Stops the CPU')
-dict.insert(PRAR, 'PRAR')
-dict.insert(PRAM, 'PRAM')
-dict.insert(LD, 'LD')
-dict.insert(ST, '')
-dict.insert(LDRI, '')
-dict.insert(STRI, '')
-dict.insert(STOR, '')
-dict.insert(LODM, '')
-dict.insert(ADD, '')
-dict.insert(SUB, '')
-dict.insert(DIV, '')
-
-// push / pop
-dict.insert(PUSH, '')
-dict.insert(POP, '')
-
-// call and return extensions
-dict.insert(CALL, '')
-dict.insert(RET, '')
-dict.insert(PASS, '')
-
-// Logic Extension
-dict.insert(JMP, '')
-dict.insert(JTL, '')
-dict.insert(JEQ, '')
-dict.insert(JNE, '')
-dict.insert(JRNE, '')
-dict.insert(JREQ, '')
-dict.insert(CMP, '')
-
-// Logical Structuring extensions
-dict.insert(LBL, '')
-dict.insert(LBJMP, '')
-dict.insert(LBSET, '')
-
-// Memory Control
-dict.insert(ADR, '')
-dict.insert(RAD, '')
-dict.insert(WAD, '')
-dict.insert(RADR, '')
-
-// Memory Management
-dict.insert(CPYR, '')
-
-// Interupts
-dict.insert(SETI, '')
-dict.insert(GETI, '')
-dict.insert(RETI, '')
-dict.insert(INPT, '')
-dict.insert(OTPT, '')
-
-// Display Extension
-dict.insert(SCORC, '')
-dict.insert(SCORX, '')
-dict.insert(SCORY, '')
-dict.insert(SCHAR, '')
-dict.insert(GECHR, '')
-dict.insert(GECX, '')
-dict.insert(GECY, '')
-dict.insert(GECXY, '')
+const SCORC = 0b11010000;   // Set Character column and row (next two args) then character (3rd arg)
+const SCORX = 0b11010001;   // Set X coord for the character buffer writing
+const SCORY = 0b11010010;   // set the y coord for the character buffer writing
+const SCHAR = 0b11010011;   // Set the char to write at the coords targeted
+const GECHR = 0b11010100;   // Get character from set x and y
+const GECX = 0b11010101;   // Get Character cursor x
+const GECY = 0b11010111;   // Get character cursor y
+const GECXY = 0b11011000;   // Get Chatacter at x, y
 
 
 const SP = 240; // stack poointer in register 1015, 8 - max 1023
@@ -209,1186 +104,1186 @@ const SP = 240; // stack poointer in register 1015, 8 - max 1023
 
 
 class CPU {
-    constructor(ext, bus = []) {
-        // Configure readline
-        this.term = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout
-        });
-        
-        // Config options
-        this.settings = {
-            terminal: {
-                width: null,
-                height: null,
-                pos: {
-                    x: null,
-                    y: null
-                }
-            },
-            emulator: {
-                width: null,
-                height: null,
-                pos: {
-                    x: null,
-                    y: null
-                }
-            }
+  constructor(ext, bus = []) {
+    // Configure readline
+    this.term = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // Config options
+    this.settings = {
+      terminal: {
+        width: null,
+        height: null,
+        pos: {
+          x: null,
+          y: null
         }
-
-        // Clogger -- graphical content loggger
-        this.c = new Clogger();
-
-        this.thread = [];
-        
-        // Set Registry connections
-        this.regBusAddr = new BUS(4);
-        this.regBusData = new BUS(4);
-        this.regBusCont = new BUS(2);
-        this.reg = new MEM(8, 16, [this.regBusAddr, this.regBusData, this.regBusCont]);
-        // Set SRM - (S)witch between (R)om and (M)emory program
-        // first 4 are READ and second 4 are WRITE
-        // 0 = 0b00010001 = Rom
-        // 1 = 0b00100010 = Memory
-        // 2 = 0b01000100 = Cartridge
-        this.reg.SRM = 0b00000000;
-        // Set Rom Program Counter
-        this.reg.RC = 0;
-        // Set Mem Program Counter
-        this.reg.PC = 0;
-        // stack pointer
-        this.reg.SP = 0;
-        // Set current Registry token
-        this.curReg = 0;
-        // Interupt Flag
-        this.reg.IS = 246;
-        this.reg[this.reg.IS] = 0b11111111;
-        // Interrupt Mask Register (IM)
-        this.reg.IM = 245;
-        this.reg[this.reg.IM] = 0b00000000;
-        // Flags
-        this.flags = {
-            FALT: false,
-            WAIT: false,
-            INST: false,
-            INTR: false,
-            EQLS: false,
-            BOOL: false,
-            DEBUG: false
-
-        };
-        // Set carryover flag
-        this.CO = 0;
-
-        // Math ALU Flags
-        this.MATH = {};
-        // Ongoing Operation flag
-        this.MATH.OP = false;
-        // Finished Operation flag
-        this.MATH.FINAL = false;
-        // Equality flag
-        this.MATH.EQLS = false;
-        // Negative flag
-        this.MATH.NEG = false;
-        // Overflow flag
-        this.MATH.OVRFLW = false;
-        // Exponent value
-        this.MATH.EXPN = 0;
-
-        // Set SRM to rom
-        this.reg.SRM = 0b00010001;
-        // memory data register
-        this.reg.MDR = 0b00000000;
-        // memory address register
-        this.reg.MAR = 0b00000000;
-
-        // Bus
-        this.membus = bus;
-        // set bus read/write banks
-        this.membus.setBANK(this.reg.SRM);
-
-        this.EXT = Array(8);
-        this.EXT.fill(null);
-        this.EXT.reg = Array(24);
-        this.EXT.reg.fill({ input: '', output: '' });
-
-        // Extensions..
-        // I don't know if this is like a bus but ugh....
-        // load extension hooks into EXT array
-        for (let i = 1; i <= ext.length; i++) {
-            // this.mem[this.reg.EP] = this.alu('ADD', this.reg.EP, 0b00001000);
-            this.reg[this.reg.IM] |= i;
-            // get output function from giving input functions in hook
-            ext[i - 1](
-                () => {
-                    // set interupt
-                    this.reg[this.reg.IS] |= i;
-                    this.reg[this.reg.IS] = 0b00000001;
-                    this.flags.INTR = true;
-                },
-                (byte) => {
-                    // set ext mem block location.
-                    // this.mem[241] = byte;
-                    // set input register
-                    // this.EXT.reg[i] = { input: '', output: '' };
-                    this.EXT.reg[i].input = byte;
-                },
-                () => {
-                    const extId = i;
-                    const v = this.EXT.reg[extId].output;
-                    this.EXT.reg[extId].output = '';
-                    return v;
-                }
-            );
+      },
+      emulator: {
+        width: null,
+        height: null,
+        pos: {
+          x: null,
+          y: null
         }
-        // Build branch table
-        this.buildBranchTable();
-    }
-
-    buildBranchTable() {
-        let bt = {
-            [INIT]: this.INIT,
-            [INITALK]: this.INITALK,
-            [SETR]: this.SETR,
-            [GETR]: this.GETR,
-            [SAVE]: this.SAVE,
-            [MUL]: this.MUL,
-            [PRN]: this.PRN,
-            [HALT]: this.HALT
-        };
-
-        // Look for Output extensions
-        if (PRAR) bt[PRAR] = this.PRAR;
-        if (PRAM) bt[PRAM] = this.PRAM;
-        // Look for Math extension
-        if (ADD) bt[ADD] = this.ADD;
-        if (SUB) bt[SUB] = this.SUB;
-        if (DIV) bt[DIV] = this.DIV;
-        // Look for Logic extension
-        if (JMP) bt[JMP] = this.JMP;
-        if (JEQ) bt[JEQ] = this.JEQ;
-        if (JNE) bt[JNE] = this.JNE;
-        if (CMP) bt[CMP] = this.CMP;
-        if (JREQ) bt[JREQ] = this.JREQ;
-        if (JRNE) bt[JRNE] = this.JRNE;
-        // Look for Load and store extensions
-        if (LD) bt[LD] = this.LD;
-        if (ST) bt[ST] = this.ST;
-        if (LDRI) bt[LDRI] = this.LDRI;
-        if (STRI) bt[STRI] = this.STRI;
-        // Look for push&pop extension
-        if (PUSH) bt[PUSH] = this.PUSH;
-        if (POP) bt[POP] = this.POP;
-        if (PASS) bt[PASS] = this.PASS;
-        // Look for Call & Return extension
-        if (CALL) bt[CALL] = this.CALL;
-        if (RET) bt[RET] = this.RET;
-        // Mem store save extension
-        if (STOR) bt[STOR] = this.MEMSTORE;
-        if (LODM) bt[LODM] = this.MEMLOAD;
-        // Interrupt control extension
-        if (SETI) bt[SETI] = this.SETI;
-        if (GETI) bt[GETI] = this.GETI;
-        if (RETI) bt[RETI] = this.RETI;
-        if (INPT && this.INPT) bt[INPT] = this.INPT;
-        if (OTPT && this.OTPT) bt[OTPT] = this.OTPT;
-
-        if (LBL) bt[LBL] = this.BLANK;
-        if (LBJMP) bt[LBJMP] = this.jumpToLabel;
-        if (LBSET) bt[LBSET] = this.setLabel;
-
-        this.branchTable = bt;
-
-        this.loaded = false;
-        this.loadedRow = 0;
-        this.loadedPos = 0;
-
-        const loadscreen = [
-            `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
-            `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
-            `00001000 000/    /0000100/           \\001000 00001000 00001000`,
-            `00001000 00/    / 000010/    ________/001000 00001000 00001000`,
-            `00001000 0/    /0 00001/    /001000 00001000 00001000 00001000`,
-            `00001000 /    /00 0000/     \\001000 00001000 00001000 00001000`,
-            `00001000/    /000 0000\\_______    \\ 00001000 00001000 00001000`,
-            `0000100/    /1000 00001000 0/     / 00001000 00001000 00001000`,
-            `000010/    /01000 00001000 /     /0 00001000 00001000 00001000`,
-            `00001/           / /            /00 00001000 00001000 00001000`,
-            `0000|___________/ 0\\___________/000 00001000 00001000 00001000`,
-            `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
-            `00001000 00001000 00001000 00001000 00001000 00001000 00001000`
-        ];
-
-        this.loadscreen = loadscreen;
-
-        //loadscreen.forEach(line => console.log(line));
-        // Set the screen to clear
-        this.write('\x1b[2J');
-        // Set position to 0, 0
-        readline.cursorTo(this.term.output, 0,0);
-    }
-
-    util_getSize() {
-    	if ( this.stdout.columns && this.stdout.rows ) {
-    		this.settings.terminal.width = this.stdout.columns ;
-    		this.settings.terminal.height = this.stdout.rows ;
-    	}
-    
-    	//this.emit( 'resize' , this.width , this.height ) ;
-    }
-
-    util_getColumn() { return this.settings.terminal.pos.x; }
-
-    util_setColumn(x) {
-        this.settings.terminal.pos.x = x;
-    }
-
-    util_getRow() {
-        
-    }
-
-    util_setRow() {
-        
-    }
-
-    /**
-     * Poke values into memory
-     */
-    poke (address, value) {
-        this.membus.ADDR = address;                                 // set memory read/write address
-        this.membus.ADDRVAL = value;                                // set memory value
-        this.membus.WRITE();                                        // write to memory address
-        // this.rom[address] = value;
-    }
-
-    /**
-     * Peek value from memory
-     */
-    peek (address) {
-        this.membus.ADDR = address;                                 // set memory read/write address
-        this.membus.READ();                                         // read from memory address
-        return this.membus.DATA();                                  // read memory data;
-        // return this.rom[address];
-    }
-
-    /**
-     * startClock
-     */
-    startClock() {
-        //const time = this.flags.DEBUG ? 800 : 6;
-        const time = 6;
-        this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, time);
-    }
-
-    /**
-     * stop the clock
-     *
-     */
-    stopClock() {
-        clearInterval(this.clock);
-        process.exit();
-    }
-
-    write(t) {
-      process.stdout.write(t);
-    }
-
-    /**
-     * clog -- console logs stats
-     * 
-     */
-    clog(str) {
-        this.cw(c.ch.storePos);
-        
-        this.cw(c.ch.resetPos);
-    }
-
-    /**
-     * cw -- console write
-     * 
-     */
-    cw(str) {
-        process.stdout.write(str);
-    }
-
-    /**
-     *
-     */
-    splash() {
-      // write the next character in load-screen memory
-      process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
-      // increment the loadPos row counter
-      this.loadedPos++;
-      // if it's greater than the row length, increment to the next row
-      if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
-        // Increment row
-        this.loadedRow++;
-        // Reset row position
-        this.loadedPos = 0;
-        // start on new line of the output
-        process.stdout.write('\n');
       }
-      // if it's past the load-memory, flip load-complete flag
-      if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
-      // skip to next tick
+    }
+
+    // Clogger -- graphical content loggger
+    this.c = new Clogger();
+
+    this.thread = [];
+
+    // Set Registry connections
+    this.regBusAddr = new BUS(4);
+    this.regBusData = new BUS(4);
+    this.regBusCont = new BUS(2);
+    this.reg = new MEM(8, 16, [this.regBusAddr, this.regBusData, this.regBusCont]);
+    // Set SRM - (S)witch between (R)om and (M)emory program
+    // first 4 are READ and second 4 are WRITE
+    // 0 = 0b00010001 = Rom
+    // 1 = 0b00100010 = Memory
+    // 2 = 0b01000100 = Cartridge
+    this.reg.SRM = 0b00000000;
+    // Set Rom Program Counter
+    this.reg.RC = 0;
+    // Set Mem Program Counter
+    this.reg.PC = 0;
+    // stack pointer
+    this.reg.SP = 0;
+    // Set current Registry token
+    this.curReg = 0;
+    // Interupt Flag
+    this.reg.IS = 246;
+    this.reg[this.reg.IS] = 0b11111111;
+    // Interrupt Mask Register (IM)
+    this.reg.IM = 245;
+    this.reg[this.reg.IM] = 0b00000000;
+    // Flags
+    this.flags = {
+      FALT: false,
+      WAIT: false,
+      INST: false,
+      INTR: false,
+      EQLS: false,
+      BOOL: false,
+      DEBUG: false
+
+    };
+    // Set carryover flag
+    this.CO = 0;
+
+    // Math ALU Flags
+    this.MATH = {};
+    // Ongoing Operation flag
+    this.MATH.OP = false;
+    // Finished Operation flag
+    this.MATH.FINAL = false;
+    // Equality flag
+    this.MATH.EQLS = false;
+    // Negative flag
+    this.MATH.NEG = false;
+    // Overflow flag
+    this.MATH.OVRFLW = false;
+    // Exponent value
+    this.MATH.EXPN = 0;
+
+    // Set SRM to rom
+    this.reg.SRM = 0b00010001;
+    // memory data register
+    this.reg.MDR = 0b00000000;
+    // memory address register
+    this.reg.MAR = 0b00000000;
+
+    // Bus
+    this.membus = bus;
+    // set bus read/write banks
+    this.membus.setBANK(this.reg.SRM);
+
+    this.EXT = Array(8);
+    this.EXT.fill(null);
+    this.EXT.reg = Array(24);
+    this.EXT.reg.fill({ input: '', output: '' });
+
+    // Extensions..
+    // I don't know if this is like a bus but ugh....
+    // load extension hooks into EXT array
+    for (let i = 1; i <= ext.length; i++) {
+      // this.mem[this.reg.EP] = this.alu('ADD', this.reg.EP, 0b00001000);
+      this.reg[this.reg.IM] |= i;
+      // get output function from giving input functions in hook
+      ext[i - 1](
+        () => {
+          // set interupt
+          this.reg[this.reg.IS] |= i;
+          this.reg[this.reg.IS] = 0b00000001;
+          this.flags.INTR = true;
+        },
+        (byte) => {
+          // set ext mem block location.
+          // this.mem[241] = byte;
+          // set input register
+          // this.EXT.reg[i] = { input: '', output: '' };
+          this.EXT.reg[i].input = byte;
+        },
+        () => {
+          const extId = i;
+          const v = this.EXT.reg[extId].output;
+          this.EXT.reg[extId].output = '';
+          return v;
+        }
+      );
+    }
+    // Build branch table
+    this.buildBranchTable();
+  }
+
+  buildBranchTable() {
+    let bt = {
+      [INIT]: this.INIT,
+      [INITALK]: this.INITALK,
+      [SETR]: this.SETR,
+      [GETR]: this.GETR,
+      [SAVE]: this.SAVE,
+      [MUL]: this.MUL,
+      [PRN]: this.PRN,
+      [HALT]: this.HALT
+    };
+
+    // Look for Output extensions
+    if (PRAR) bt[PRAR] = this.PRAR;
+    if (PRAM) bt[PRAM] = this.PRAM;
+    // Look for Math extension
+    if (ADD) bt[ADD] = this.ADD;
+    if (SUB) bt[SUB] = this.SUB;
+    if (DIV) bt[DIV] = this.DIV;
+    // Look for Logic extension
+    if (JMP) bt[JMP] = this.JMP;
+    if (JEQ) bt[JEQ] = this.JEQ;
+    if (JNE) bt[JNE] = this.JNE;
+    if (CMP) bt[CMP] = this.CMP;
+    if (JREQ) bt[JREQ] = this.JREQ;
+    if (JRNE) bt[JRNE] = this.JRNE;
+    // Look for Load and store extensions
+    if (LD) bt[LD] = this.LD;
+    if (ST) bt[ST] = this.ST;
+    if (LDRI) bt[LDRI] = this.LDRI;
+    if (STRI) bt[STRI] = this.STRI;
+    // Look for push&pop extension
+    if (PUSH) bt[PUSH] = this.PUSH;
+    if (POP) bt[POP] = this.POP;
+    if (PASS) bt[PASS] = this.PASS;
+    // Look for Call & Return extension
+    if (CALL) bt[CALL] = this.CALL;
+    if (RET) bt[RET] = this.RET;
+    // Mem store save extension
+    if (STOR) bt[STOR] = this.MEMSTORE;
+    if (LODM) bt[LODM] = this.MEMLOAD;
+    // Interrupt control extension
+    if (SETI) bt[SETI] = this.SETI;
+    if (GETI) bt[GETI] = this.GETI;
+    if (RETI) bt[RETI] = this.RETI;
+    if (INPT && this.INPT) bt[INPT] = this.INPT;
+    if (OTPT && this.OTPT) bt[OTPT] = this.OTPT;
+
+    if (LBL) bt[LBL] = this.BLANK;
+    if (LBJMP) bt[LBJMP] = this.jumpToLabel;
+    if (LBSET) bt[LBSET] = this.setLabel;
+
+    this.branchTable = bt;
+
+    this.loaded = false;
+    this.loadedRow = 0;
+    this.loadedPos = 0;
+
+    const loadscreen = [
+      `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
+      `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
+      `00001000 000/    /0000100/           \\001000 00001000 00001000`,
+      `00001000 00/    / 000010/    ________/001000 00001000 00001000`,
+      `00001000 0/    /0 00001/    /001000 00001000 00001000 00001000`,
+      `00001000 /    /00 0000/     \\001000 00001000 00001000 00001000`,
+      `00001000/    /000 0000\\_______    \\ 00001000 00001000 00001000`,
+      `0000100/    /1000 00001000 0/     / 00001000 00001000 00001000`,
+      `000010/    /01000 00001000 /     /0 00001000 00001000 00001000`,
+      `00001/           / /            /00 00001000 00001000 00001000`,
+      `0000|___________/ 0\\___________/000 00001000 00001000 00001000`,
+      `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
+      `00001000 00001000 00001000 00001000 00001000 00001000 00001000`
+    ];
+
+    this.loadscreen = loadscreen;
+
+    //loadscreen.forEach(line => console.log(line));
+    // Set the screen to clear
+    this.write('\x1b[2J');
+    // Set position to 0, 0
+    readline.cursorTo(this.term.output, 0, 0);
+  }
+
+  util_getSize() {
+    if (this.stdout.columns && this.stdout.rows) {
+      this.settings.terminal.width = this.stdout.columns;
+      this.settings.terminal.height = this.stdout.rows;
+    }
+
+    //this.emit( 'resize' , this.width , this.height ) ;
+  }
+
+  util_getColumn() { return this.settings.terminal.pos.x; }
+
+  util_setColumn(x) {
+    this.settings.terminal.pos.x = x;
+  }
+
+  util_getRow() {
+
+  }
+
+  util_setRow() {
+
+  }
+
+  /**
+   * Poke values into memory
+   */
+  poke(address, value) {
+    this.membus.ADDR = address;                                 // set memory read/write address
+    this.membus.ADDRVAL = value;                                // set memory value
+    this.membus.WRITE();                                        // write to memory address
+    // this.rom[address] = value;
+  }
+
+  /**
+   * Peek value from memory
+   */
+  peek(address) {
+    this.membus.ADDR = address;                                 // set memory read/write address
+    this.membus.READ();                                         // read from memory address
+    return this.membus.DATA();                                  // read memory data;
+    // return this.rom[address];
+  }
+
+  /**
+   * startClock
+   */
+  startClock() {
+    //const time = this.flags.DEBUG ? 800 : 6;
+    const time = 6;
+    this.clock = setInterval(() => { /*console.log(Date.now());*/ this.tick(); }, time);
+  }
+
+  /**
+   * stop the clock
+   *
+   */
+  stopClock() {
+    clearInterval(this.clock);
+    process.exit();
+  }
+
+  write(t) {
+    process.stdout.write(t);
+  }
+
+  /**
+   * clog -- console logs stats
+   *
+   */
+  clog(str) {
+    this.cw(c.ch.storePos);
+
+    this.cw(c.ch.resetPos);
+  }
+
+  /**
+   * cw -- console write
+   *
+   */
+  cw(str) {
+    process.stdout.write(str);
+  }
+
+  /**
+   *
+   */
+  splash() {
+    // write the next character in load-screen memory
+    process.stdout.write(this.loadscreen[this.loadedRow][this.loadedPos]);
+    // increment the loadPos row counter
+    this.loadedPos++;
+    // if it's greater than the row length, increment to the next row
+    if (this.loadedPos >= this.loadscreen[this.loadedRow].length) {
+      // Increment row
+      this.loadedRow++;
+      // Reset row position
+      this.loadedPos = 0;
+      // start on new line of the output
+      process.stdout.write('\n');
+    }
+    // if it's past the load-memory, flip load-complete flag
+    if (this.loadedRow >= this.loadscreen.length) this.loaded = true;
+    // skip to next tick
+    return;
+  }
+
+  /**
+   * tick
+   *
+   */
+  tick() {
+
+    // If not load-complete, process
+    if (!this.loaded) {
+      this.splash();
       return;
     }
 
-    /**
-     * tick
-     *
-     */
-    tick() {
-        
-        // If not load-complete, process
-        if (!this.loaded) {
-          this.splash();
-          return;
+
+
+    // Is the Interupt flag thrown?
+    if (this.flags.INTR === true && !this.flags.INST) {
+      // console.log('PC: ', this.reg.PC);
+      // this.PUSH();
+      // There is an interrupt AND there are no current instructions in the middle of completing.
+      // Mask the binary
+      const masked = this.reg[this.reg.IS] & this.reg[this.reg.IM];
+      // check interupts
+      for (let i = 0; i < 8; i++) {
+        // If this active
+        if (((masked >> i) & 0x01) === 1) {
+          // interupt cleaner
+          this.reg.IS &= ~i;
+          // look up the mem address for the interrupt
+          this.reg.MAR = 255 - (i * 2);
+          this.membus.ADDR = 255;
+          this.membus.READ();
+          // this.reg.PC = this.reg.MAR;
+          this.reg.PC = this.membus.DATA();
         }
-
-
-        
-        // Is the Interupt flag thrown?
-        if (this.flags.INTR === true && !this.flags.INST) {
-            // console.log('PC: ', this.reg.PC);
-            // this.PUSH();
-            // There is an interrupt AND there are no current instructions in the middle of completing.
-            // Mask the binary
-            const masked = this.reg[this.reg.IS] & this.reg[this.reg.IM];
-            // check interupts
-            for (let i = 0; i < 8; i++) {
-                // If this active
-                if (((masked >> i) & 0x01) === 1) {
-                    // interupt cleaner
-                    this.reg.IS &= ~i;
-                    // look up the mem address for the interrupt
-                    this.reg.MAR = 255 - (i * 2);
-                    this.membus.ADDR = 255;
-                    this.membus.READ();
-                    // this.reg.PC = this.reg.MAR;
-                    this.reg.PC = this.membus.DATA();
-                }
-            }
-            this.flags.INTR = false;
-            // this.POP();
-            // console.log('PC: ', this.reg.PC);
-        }
-
-
-        
-        // run instructions...
-        this.membus.ADDR = this.reg.PC;                             // set read/write memory address
-        this.membus.READ();                                         // read memory location
-        const currentInstruction = this.membus.DATA();              // read data from membus
-        // if (this.reg.PC <= 23 && this.reg.PC >= 8) {
-        //     // this is LABEL country, so basically symbolic links.  jump to that address.
-        //     this .reg.PC = currentInstruction;
-        //     return;
-        // }
-        
-        // this is the actual instruction
-        const handler = this.branchTable[currentInstruction];
-
-
-        
-
-        if (this.flags.DEBUG) {
-          const space = " ";
-        
-          this.write('\x1b[s');
-          this.write('\x1b[K');
-          this.write('\x1b[0;0H');
-          this.write(space.repeat(26));
-          this.write('\x1b[0;0H');
-          this.write(`PC:${this.reg.PC}  INSTRUCTION: ${currentInstruction.toString(16)}`);
-          this.write('\x1b[u');
-        }
-
-
-
-
-        if (handler === undefined) {
-            console.error('ERROR: invalid instruction ' + currentInstruction);
-            console.error(`PC:${this.reg.PC};`);
-            console.error(`Memory Value: 0x${this.membus.DATA().toString(16)}`);
-            console.log('MEMORY STACK:\n');
-            console.log('ROM:\n');
-            const st = this.reg.PC - 5;
-            this.membus.banks[0]._bank.slice(this.reg.PC - 5, this. reg.PC + 10).forEach((line, i) => {
-              const ln = st+i;
-              const b = line.toString(2).padStart(8, '0');
-              const marker = (this.reg.PC === ln) ? ' ERR > ' : '       ';
-              console.log(`${marker}${ln.toString().padStart(3, '0')}: 0x${line.toString(16).padStart(2, '0')}  0b${b}`);
-            });
-            //console.log('MEM:\n', this.membus.banks[1]._bank);
-            this.stopClock();
-            return;
-        }
-
-
-        
-        handler.call(this); // set this explicitly in handler
-    }
-
-    
-
-    /**
-     * arithmatic logic unit
-     * @method alu
-     * @param  {[type]} func [description]
-     * @param  {[type]} r0   [description]
-     * @param  {[type]} r1   [description]
-     * @return {[type]}      [description]
-     */
-    alu(func, r0 = 2, r1 = 1, sv = false) {
-        let output = 0;
-        // Reset the Operation flag and all other MATH flags
-        if (!this.OP || this.MATH.FINAL) {
-            this.MATH.OP = true;
-            this.MATH.FINAL = false;
-            this.MATH.EQLS = false;
-            this.MATH.NEG = false;
-            this.MATH.OVRFLW = false;
-            this.MATH.EXPN = 0;
-        }
-        // Main operation switch
-        switch (func) {
-            // increment number
-            case 'INC':
-                output = this.reg[r0] + 1;
-                break;
-            // Decrement number
-            case 'DEC':
-                output = this.reg[r0] - 1;
-                break;
-            case 'ADD':
-                output = !sv ? this.reg[1] + this.reg[2] : r0 + r1;
-                break;
-            case 'SUB':
-                output = !sv ? this.reg[2] - this.reg[1] : r1 - r0;
-                break;
-            case 'MUL':
-                output = !sv ? this.reg[2] * this.reg[1] : r1 * r0;
-                break;
-            case 'DIV':
-                output = !sv ? this.reg[2] / this.reg[1] : r1 / r0;
-                break;
-            case 'CMP':
-                output = !sv ? this.reg[2] === this.reg[1] : r1 === r0;
-                output = +output;
-                this.MATH.EQLS = output;
-                break;
-        }
-
-        if (func != 'CMP' && output < 0) {
-            output = Math.abs(output);
-            this.MATH.NEG = true;
-        }
-        // If the number is greater than 
-        if (func != 'CMP' && output > 255) {
-            // Get the exponent that the value could be multiplied by
-            let exp = Math.floor(output / 256);
-            // Max it out at 255
-            exp = Math.min(99, exp);
-            // Set the output to the remainder after the exponent is taken out
-            output = output  % 256;
-            // Set the OVERFLOW flag
-            this.MATH.OVRFLW = true;
-            // Set the EXPN catch
-            this.MATH.EXPN = exp;
-        }
-        // Set the ACCUMULATOR
-        this.reg[2] = output;
-        // Optionally return the output
-        return output;
-    }
-
-    /**
-     * Init
-     *
-     */
-    INIT() {
-        this.flags.INTR = false;
-        this.flags.DEBUG = false;
-        this.curReg = 0;
-        /* set Interupt Mask to 0 so all interupts are blocked. */
-        this.membus.ADDR = this.reg.IM;                             // set memory read/write address
-        this.membus.ADDRVAL = 0b00000000;                           // set memory value to write
-        this.membus.WRITE();                                        // write the memory
-        // this.mem[this.reg.IM] = 0b00000000;
-        this.reg.PC++;                                              // go to next instruction
-    }
-
-    /**
-     * Initalk
-     *
-     */
-    INITALK() {
-    console.log('INITALK')
-        this.flags.INTR = false;
-        this.flags.DEBUG = true;
-        this.curReg = 0;
-        /* set Interupt Mask to 0 so all interupts are blocked. */
-        this.membus.ADDR = this.reg.IM;                             // set memory read/write address
-        this.membus.ADDRVAL = 0b00000000;                           // set memory value to write
-        this.membus.WRITE();                                        // write the memory
-        // this.mem[this.reg.IM] = 0b00000000;
-        this.reg.PC++;                                              // go to next instruction
-    }
-
-    /**
-     * (SET) the current (R)egister location
-     * @method SET
-     */
-    SETR() {
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read the memory
-        // const reg = this.mem[this.reg.PC + 1];
-        // this.curReg = reg;
-        this.curReg = this.membus.DATA();                           // read the data from mebus
-        this.reg.PC += 2;
-    }
-
-    /**
-     * (GET) the current (R)egister location
-     * @method SET
-     * @PRIVATE
-     */
-    GETR() {
-        return this.curReg;
-    }
-
-    /**
-     * Save the value in the inext instruction line to the current register location
-     * @method SAVE
-     */
-    SAVE() {
-        // console.log('SAVE...');
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory read/write address
-        this.membus.READ();                                         // read memory
-        this.reg[this.curReg] = this.membus.DATA();                 // read membus data
-        // this.reg[this.curReg] = this.mem[this.reg.PC + 1];
-        this.reg.PC += 2;                                           // increment PC by 2
-    }
-
-    PASS() {
-        this.membus.ADDR = this.reg.PC + 1;
-        this.membus.READ();
-        const addr = this.membus.DATA();
-        this.reg.PC = addr;
-    }
-
-    /**
-     * multiply the next two concurrent values in memory and place them into current register location
-     * @method MULL
-     */
-    MUL() {
-        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        // this.membus.READ();                                         // read memory
-        // const m1 = this.membus.DATA();                              // get memory read data
-        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        // this.membus.READ();                                         // read memory
-        // const m2 = this.membus.DATA();                              // get memory read data
-        // this.reg[this.curReg] = this.alu('MUL', m1, m2);
-        this.alu('MUL');
-        this.reg.PC += 1;
-    }
-
-    /**
-     * Divide two numbers
-     * @method DIV
-     */
-    DIV() {
-        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        // this.membus.READ();                                         // read memory
-        // const m1 = this.membus.DATA();                              // get memory read data
-        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        // this.membus.READ();                                         // read memory
-        // const m2 = this.membus.DATA();                              // get memory read data
-        // this.reg[this.curReg] = this.alu('DIV', m1, m2);
-        this.alu('DIV')
-        this.reg.PC += 1;
-    }
-
-    ADD() {
-      this.alu('ADD');
-      this.reg.PC += 1;
-    }
-
-    /**
-     * add two concurrent numbers together and place in current registry
-     * @method ADD
-     */
-    ADDER() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
-        this.reg[this.curReg] = this.alu('ADD', m1, m2);
-        this.reg.PC += 3;
-    }
-
-    /**
-     * subtract one number from another number.
-     * @method SUB
-     */
-    SUB() {
-        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        // this.membus.READ();                                         // read memory
-        // const m1 = this.membus.DATA();                              // get memory read data
-        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        // this.membus.READ();                                         // read memory
-        // const m2 = this.membus.DATA();                              // get memory read data
-        // this.reg[this.curReg] = this.alu('SUB', m1, m2);
-        this.alu('SUB');
-        this.reg.PC += 1;
-    }
-
-    /**
-     * compare two values
-     * @method CMP
-     */
-    CMP() {
-        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        // this.membus.READ();                                         // read memory
-        // const m1 = this.membus.DATA();                              // get memory read data
-        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        // this.membus.READ();                                         // read memory
-        // const m2 = this.membus.DATA();                              // get memory read data
-        // this.reg[this.curReg] = this.alu('CMP', m1, m2);
-        this.alu('MP');
-        this.reg.PC += 1;
-    }
-
-    /**
-     * (PR)int (A)lpha-numeric char from Register
-     * @method PRAR
-     */
-    PRAR() {
-        let mv = this.reg[this.curReg];
-        if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
-        process.stdout.write(String.fromCharCode(mv));
-        this.reg.PC += 1;
-    }
-
-    /**
-     * (PR)int (A)lpha-numeric char from memory
-     * @method PRAM
-     */
-    PRAM() {
-        let mv = this.reg[this.curReg];
-        if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
-        process.stdout.write(String.fromCharCode(mv));
-        this.reg.PC += 1;
-    }
-
-    /**
-     * print the current number.
-     * @method PRN
-     */
-    PRN() {
-        console.log(this.reg[this.curReg]);
-        this.reg.PC += 1;
-    }
-
-    /**
-     * halt the current program in memory.
-     * @method HALT
-     */
-    HALT() {
-        console.log('HALTING...');
-        if (this.bufferedString) console.log(this.bufferedString);
-        this.stopClock();
-    }
-
-    /**
-     * Jump to a supplied memory address
-     * @method JMP
-     */
-    JMP() {
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // read membus data
-        // const m1 = this.mem[this.reg.PC + 1];
-        this.reg.PC = m1;
-    }
-
-    /**
-     * Jump to a supplied memory address at REG_POINTER if REG_1 and REG_2 are equal.
-     * @method JREQ
-     */
-    JREQ() {
-        if (this.reg[1] === this.reg[2]) {
-          this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
-          this.membus.READ();                                         // read memory
-          const m1 = this.membus.DATA();                              // read membus data
-          // const m1 = this.mem[this.reg.PC + 1];
-          this.reg.PC = m1;
-        }
-        this.reg.PC += 2;
-    }
-
-    /**
-     * Jump to a supplied memory address at REG_POINTER if REG_1 and REG_2 are not equal.
-     * @method JRNEQ[<64;112;34M[<64;112;34M]]
-     */
-    JRNEQ() {
-      if (this.reg[1] !== this.reg[2]) {
-          this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
-          this.membus.READ();                                         // read memory
-          const m1 = this.membus.DATA();                              // read membus data
-          // const m1 = this.mem[this.reg.PC + 1];
-          this.reg.PC = m1;      
       }
-      this.reg.PC += 2;
+      this.flags.INTR = false;
+      // this.POP();
+      // console.log('PC: ', this.reg.PC);
     }
 
-    /**
-     * Jump to a supplied memory address if two reg address values are equal
-     * @method JEQ
-     */
-    JEQ() {
+
+
+    // run instructions...
+    this.membus.ADDR = this.reg.PC;                             // set read/write memory address
+    this.membus.READ();                                         // read memory location
+    const currentInstruction = this.membus.DATA();              // read data from membus
+    // if (this.reg.PC <= 23 && this.reg.PC >= 8) {
+    //     // this is LABEL country, so basically symbolic links.  jump to that address.
+    //     this .reg.PC = currentInstruction;
+    //     return;
+    // }
+
+    // this is the actual instruction
+    const handler = this.branchTable[currentInstruction];
+
+
+
+
+    if (this.flags.DEBUG) {
+      const space = " ";
+
+      this.write('\x1b[s');
+      this.write('\x1b[K');
+      this.write('\x1b[0;0H');
+      this.write(space.repeat(26));
+      this.write('\x1b[0;0H');
+      this.write(`PC:${this.reg.PC}  INSTRUCTION: ${currentInstruction.toString(16)}`);
+      this.write('\x1b[u');
+    }
+
+
+
+
+    if (handler === undefined) {
+      console.error('ERROR: invalid instruction ' + currentInstruction);
+      console.error(`PC:${this.reg.PC};`);
+      console.error(`Memory Value: 0x${this.membus.DATA().toString(16)}`);
+      console.log('MEMORY STACK:\n');
+      console.log('ROM:\n');
+      const st = this.reg.PC - 5;
+      this.membus.banks[0]._bank.slice(this.reg.PC - 5, this.reg.PC + 10).forEach((line, i) => {
+        const ln = st + i;
+        const b = line.toString(2).padStart(8, '0');
+        const marker = (this.reg.PC === ln) ? ' ERR > ' : '       ';
+        console.log(`${marker}${ln.toString().padStart(3, '0')}: 0x${line.toString(16).padStart(2, '0')}  0b${b}`);
+      });
+      //console.log('MEM:\n', this.membus.banks[1]._bank);
+      this.stopClock();
+      return;
+    }
+
+
+
+    handler.call(this); // set this explicitly in handler
+  }
+
+
+
+  /**
+   * arithmatic logic unit
+   * @method alu
+   * @param  {[type]} func [description]
+   * @param  {[type]} r0   [description]
+   * @param  {[type]} r1   [description]
+   * @return {[type]}      [description]
+   */
+  alu(func, r0 = 2, r1 = 1, sv = false) {
+    let output = 0;
+    // Reset the Operation flag and all other MATH flags
+    if (!this.OP || this.MATH.FINAL) {
+      this.MATH.OP = true;
+      this.MATH.FINAL = false;
+      this.MATH.EQLS = false;
+      this.MATH.NEG = false;
+      this.MATH.OVRFLW = false;
+      this.MATH.EXPN = 0;
+    }
+    // Main operation switch
+    switch (func) {
+      // increment number
+      case 'INC':
+        output = this.reg[r0] + 1;
+        break;
+      // Decrement number
+      case 'DEC':
+        output = this.reg[r0] - 1;
+        break;
+      case 'ADD':
+        output = !sv ? this.reg[1] + this.reg[2] : r0 + r1;
+        break;
+      case 'SUB':
+        output = !sv ? this.reg[2] - this.reg[1] : r1 - r0;
+        break;
+      case 'MUL':
+        output = !sv ? this.reg[2] * this.reg[1] : r1 * r0;
+        break;
+      case 'DIV':
+        output = !sv ? this.reg[2] / this.reg[1] : r1 / r0;
+        break;
+      case 'CMP':
+        output = !sv ? this.reg[2] === this.reg[1] : r1 === r0;
+        output = +output;
+        this.MATH.EQLS = output;
+        break;
+    }
+
+    if (func != 'CMP' && output < 0) {
+      output = Math.abs(output);
+      this.MATH.NEG = true;
+    }
+    // If the number is greater than
+    if (func != 'CMP' && output > 255) {
+      // Get the exponent that the value could be multiplied by
+      let exp = Math.floor(output / 256);
+      // Max it out at 255
+      exp = Math.min(99, exp);
+      // Set the output to the remainder after the exponent is taken out
+      output = output % 256;
+      // Set the OVERFLOW flag
+      this.MATH.OVRFLW = true;
+      // Set the EXPN catch
+      this.MATH.EXPN = exp;
+    }
+    // Set the ACCUMULATOR
+    this.reg[2] = output;
+    // Optionally return the output
+    return output;
+  }
+
+  /**
+   * Init
+   *
+   */
+  INIT() {
+    this.flags.INTR = false;
+    this.flags.DEBUG = false;
+    this.curReg = 0;
+    /* set Interupt Mask to 0 so all interupts are blocked. */
+    this.membus.ADDR = this.reg.IM;                             // set memory read/write address
+    this.membus.ADDRVAL = 0b00000000;                           // set memory value to write
+    this.membus.WRITE();                                        // write the memory
+    // this.mem[this.reg.IM] = 0b00000000;
+    this.reg.PC++;                                              // go to next instruction
+  }
+
+  /**
+   * Initalk
+   *
+   */
+  INITALK() {
+    console.log('INITALK')
+    this.flags.INTR = false;
+    this.flags.DEBUG = true;
+    this.curReg = 0;
+    /* set Interupt Mask to 0 so all interupts are blocked. */
+    this.membus.ADDR = this.reg.IM;                             // set memory read/write address
+    this.membus.ADDRVAL = 0b00000000;                           // set memory value to write
+    this.membus.WRITE();                                        // write the memory
+    // this.mem[this.reg.IM] = 0b00000000;
+    this.reg.PC++;                                              // go to next instruction
+  }
+
+  /**
+   * (SET) the current (R)egister location
+   * @method SET
+   */
+  SETR() {
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read the memory
+    // const reg = this.mem[this.reg.PC + 1];
+    // this.curReg = reg;
+    this.curReg = this.membus.DATA();                           // read the data from mebus
+    this.reg.PC += 2;
+  }
+
+  /**
+   * (GET) the current (R)egister location
+   * @method SET
+   * @PRIVATE
+   */
+  GETR() {
+    return this.curReg;
+  }
+
+  /**
+   * Save the value in the inext instruction line to the current register location
+   * @method SAVE
+   */
+  SAVE() {
+    // console.log('SAVE...');
+    this.membus.ADDR = this.reg.PC + 1;                         // Set memory read/write address
+    this.membus.READ();                                         // read memory
+    this.reg[this.curReg] = this.membus.DATA();                 // read membus data
+    // this.reg[this.curReg] = this.mem[this.reg.PC + 1];
+    this.reg.PC += 2;                                           // increment PC by 2
+  }
+
+  PASS() {
+    this.membus.ADDR = this.reg.PC + 1;
+    this.membus.READ();
+    const addr = this.membus.DATA();
+    this.reg.PC = addr;
+  }
+
+  /**
+   * multiply the next two concurrent values in memory and place them into current register location
+   * @method MULL
+   */
+  MUL() {
+    // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    // this.membus.READ();                                         // read memory
+    // const m1 = this.membus.DATA();                              // get memory read data
+    // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    // this.membus.READ();                                         // read memory
+    // const m2 = this.membus.DATA();                              // get memory read data
+    // this.reg[this.curReg] = this.alu('MUL', m1, m2);
+    this.alu('MUL');
+    this.reg.PC += 1;
+  }
+
+  /**
+   * Divide two numbers
+   * @method DIV
+   */
+  DIV() {
+    // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    // this.membus.READ();                                         // read memory
+    // const m1 = this.membus.DATA();                              // get memory read data
+    // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    // this.membus.READ();                                         // read memory
+    // const m2 = this.membus.DATA();                              // get memory read data
+    // this.reg[this.curReg] = this.alu('DIV', m1, m2);
+    this.alu('DIV')
+    this.reg.PC += 1;
+  }
+
+  ADD() {
+    this.alu('ADD');
+    this.reg.PC += 1;
+  }
+
+  /**
+   * add two concurrent numbers together and place in current registry
+   * @method ADD
+   */
+  ADDER() {
+    this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    this.membus.READ();                                         // read memory
+    const m1 = this.membus.DATA();                              // get memory read data
+    this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    this.membus.READ();                                         // read memory
+    const m2 = this.membus.DATA();                              // get memory read data
+    // const m1 = this.mem[this.reg.PC + 1];
+    // const m2 = this.mem[this.reg.PC + 2];
+    this.reg[this.curReg] = this.alu('ADD', m1, m2);
+    this.reg.PC += 3;
+  }
+
+  /**
+   * subtract one number from another number.
+   * @method SUB
+   */
+  SUB() {
+    // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    // this.membus.READ();                                         // read memory
+    // const m1 = this.membus.DATA();                              // get memory read data
+    // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    // this.membus.READ();                                         // read memory
+    // const m2 = this.membus.DATA();                              // get memory read data
+    // this.reg[this.curReg] = this.alu('SUB', m1, m2);
+    this.alu('SUB');
+    this.reg.PC += 1;
+  }
+
+  /**
+   * compare two values
+   * @method CMP
+   */
+  CMP() {
+    // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    // this.membus.READ();                                         // read memory
+    // const m1 = this.membus.DATA();                              // get memory read data
+    // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    // this.membus.READ();                                         // read memory
+    // const m2 = this.membus.DATA();                              // get memory read data
+    // this.reg[this.curReg] = this.alu('CMP', m1, m2);
+    this.alu('MP');
+    this.reg.PC += 1;
+  }
+
+  /**
+   * (PR)int (A)lpha-numeric char from Register
+   * @method PRAR
+   */
+  PRAR() {
+    let mv = this.reg[this.curReg];
+    if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
+    process.stdout.write(String.fromCharCode(mv));
+    this.reg.PC += 1;
+  }
+
+  /**
+   * (PR)int (A)lpha-numeric char from memory
+   * @method PRAM
+   */
+  PRAM() {
+    let mv = this.reg[this.curReg];
+    if (typeof mv === 'string') mv = parseInt(mv.padStart(8, '0'), 2);
+    process.stdout.write(String.fromCharCode(mv));
+    this.reg.PC += 1;
+  }
+
+  /**
+   * print the current number.
+   * @method PRN
+   */
+  PRN() {
+    console.log(this.reg[this.curReg]);
+    this.reg.PC += 1;
+  }
+
+  /**
+   * halt the current program in memory.
+   * @method HALT
+   */
+  HALT() {
+    console.log('HALTING...');
+    if (this.bufferedString) console.log(this.bufferedString);
+    this.stopClock();
+  }
+
+  /**
+   * Jump to a supplied memory address
+   * @method JMP
+   */
+  JMP() {
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
+    this.membus.READ();                                         // read memory
+    const m1 = this.membus.DATA();                              // read membus data
+    // const m1 = this.mem[this.reg.PC + 1];
+    this.reg.PC = m1;
+  }
+
+  /**
+   * Jump to a supplied memory address at REG_POINTER if REG_1 and REG_2 are equal.
+   * @method JREQ
+   */
+  JREQ() {
+    if (this.reg[1] === this.reg[2]) {
+      this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
+      this.membus.READ();                                         // read memory
+      const m1 = this.membus.DATA();                              // read membus data
+      // const m1 = this.mem[this.reg.PC + 1];
+      this.reg.PC = m1;
+    }
+    this.reg.PC += 2;
+  }
+
+  /**
+   * Jump to a supplied memory address at REG_POINTER if REG_1 and REG_2 are not equal.
+   * @method JRNEQ[<64;112;34M[<64;112;34M]]
+   */
+  JRNEQ() {
+    if (this.reg[1] !== this.reg[2]) {
+      this.membus.ADDR = this.reg.PC + 1;                         // set memory address for read
+      this.membus.READ();                                         // read memory
+      const m1 = this.membus.DATA();                              // read membus data
+      // const m1 = this.mem[this.reg.PC + 1];
+      this.reg.PC = m1;
+    }
+    this.reg.PC += 2;
+  }
+
+  /**
+   * Jump to a supplied memory address if two reg address values are equal
+   * @method JEQ
+   */
+  JEQ() {
     // Version 1 -- accepts 3 args, 1,2 for Register addresses, 3 for the memory jump address
-        // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        // this.membus.READ();                                         // read memory
-        // const m1 = this.membus.DATA();                              // get memory read data
-        // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        // this.membus.READ();                                         // read memory
-        // const m2 = this.membus.DATA();                              // get memory read data
-        // // const m1 = this.mem[this.reg.PC + 1];
-        // // const m2 = this.mem[this.reg.PC + 2];
-        // if (m1 === m2) {
-        //     this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
-        //     this.membus.READ();                                     // read memory
-        //     this.reg.PC = this.membus.DATA();                       // read membus data
-        //     // this.reg.PC = this.mem[this.reg.PC + 3];
-        // } else {
-        //    this.reg.PC += 4;
-        // }
+    // this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    // this.membus.READ();                                         // read memory
+    // const m1 = this.membus.DATA();                              // get memory read data
+    // this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    // this.membus.READ();                                         // read memory
+    // const m2 = this.membus.DATA();                              // get memory read data
+    // // const m1 = this.mem[this.reg.PC + 1];
+    // // const m2 = this.mem[this.reg.PC + 2];
+    // if (m1 === m2) {
+    //     this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
+    //     this.membus.READ();                                     // read memory
+    //     this.reg.PC = this.membus.DATA();                       // read membus data
+    //     // this.reg.PC = this.mem[this.reg.PC + 3];
+    // } else {
+    //    this.reg.PC += 4;
+    // }
     // Version 2 -- accepts only jump address and looks at accumulator and math argument registers (1,2)
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for JUMP_ADDR
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.alu()
-        if (m1 === m2) {
-            this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
-            this.membus.READ();                                     // read memory
-            this.reg.PC = this.membus.DATA();                       // read membus data
-            // this.reg.PC = this.mem[this.reg.PC + 3];
-        } else {
-            this.reg.PC += 4;
-        }
+    this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for JUMP_ADDR
+    this.membus.READ();                                         // read memory
+    const m1 = this.membus.DATA();                              // get memory read data
+    this.alu()
+    if (m1 === m2) {
+      this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
+      this.membus.READ();                                     // read memory
+      this.reg.PC = this.membus.DATA();                       // read membus data
+      // this.reg.PC = this.mem[this.reg.PC + 3];
+    } else {
+      this.reg.PC += 4;
+    }
+  }
+
+  /**
+   * Jump to a supplied mem. address if 2 supplied reg address values are not equal.
+   * @method JNE
+   */
+  JNE() {
+    this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
+    this.membus.READ();                                         // read memory
+    const m1 = this.membus.DATA();                              // get memory read data
+    this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
+    this.membus.READ();                                         // read memory
+    const m2 = this.membus.DATA();                              // get memory read data
+    // const m1 = this.mem[this.reg.PC + 1];
+    // const m2 = this.mem[this.reg.PC + 2];
+    if (m1 === m2) {
+      this.reg.PC += 4;
+    } else {
+      this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
+      this.membus.READ();                                     // read memory
+      this.reg.PC = this.membus.DATA();                       // read membus data
+      // this.reg.PC = this.mem[this.reg.PC + 3];
+    }
+  }
+
+  /**
+   * load the value at MAR address in memory into MDR
+   * @method MEMLOAD
+   */
+  MEMLOAD() {
+    // set membus address
+    this.membus.ADDR = this.reg.MAR;
+    // instruct memory to read
+    this.membus.READ();
+    // set MDR
+    this.reg.MDR = this.membus.DATA();
+    // this.reg.MDR = this.mem[this.reg.MAR];
+  }
+
+  /**
+   * store the value in MDR in the mem location in MAR
+   * @method MEMSTORE
+   */
+  MEMSTORE() {
+    // Set memory address
+    this.membus.ADDR = this.reg.MAR;
+    // Set memory write value
+    this.membus.ADDRVAL = this.reg.MDR;
+    // instruct memory to write
+    this.membus.WRITE();
+    // this.mem[this.reg.MAR] = this.reg.MDR;
+  }
+
+  /**
+   * Loa(d) directly from memory
+   * @method LD
+   */
+  LD() {
+    // set memory address
+    this.membus.ADDR = this.reg.PC + 1;
+    // Read memory
+    this.membus.READ();
+    // set register with memory
+    this.reg[this.curReg] = this.membus.DATA();
+    // const ml = this.mem[this.reg.PC + 1];
+    // this.reg[this.curReg] = m1;
+    this.reg.PC += 2;
+  }
+
+  /**
+   * (St)ore Directly to Memory
+   * @method ST
+   */
+  ST() {
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read memory location
+    const ml = this.membus.DATA();                              // read memory data
+    // const ml = this.mem[this.reg.PC + 1];
+    this.membus.ADDR = ml;                                      // set memory read/write address
+    this.membus.ADDRVAL = this.reg[this.curReg];                // set memory write value
+    this.membus.WRITE();                                        // write value to mem address
+    // this.mem[ml] = this.reg[this.curReg];
+    this.reg.pc += 2;                                           // increment counter 2
+  }
+
+  /**
+   * (L)oa(d)-(R)egister-(I)ndirect
+   * @method LDRI
+   */
+  LDRI() {
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read memory location
+    const rl = this.membus.DATA();                              // read memory data
+    // const rl = this.mem[this.reg.PC + 1];
+    this.membus.ADDR = rl;                                      // set memory read/write address
+    this.membus.READ();                                         // read memory from address
+    this.reg[this.curReg] = this.membus.DATA();                 // read memory data
+    // this.reg[this.curReg] = this.mem[rl];
+    this.reg.PC += 2;                                           // increment counter 2
+  }
+
+  /**
+   * (St)ore (R)egister (I)ndirect
+   * @method STRI
+   */
+  STRI() {
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read memory location
+    const rl = this.membus.DATA;                                // read memory data
+    // const rl = this.mem[this.reg.PC + 1];
+    const ml = this.reg[rl];
+    this.membus.ADDR = ml;                                      // set memory read/write address
+    this.membus.ADDRVAL = this.reg[this.curReg];                // set memory data to write
+    this.membus.WRITE();                                        // write data to memory location
+    // this.mem[ml] = this.reg[this.curReg];
+    this.reg.PC += 2;                                           // increment counter 2
+  }
+
+  /**
+   * Set the PC.  if out of bounds, set to neutral number.
+   * @method SPC
+   */
+  SPC() {
+    // TODO: set bounds of max min;
+    // TODO: make sure it allows for a little before for terminal running.
+    // TODO: need a good memory set for this.
+  }
+
+  /**
+   * Copy Range (inclusive)
+   * @method CPYR
+   */
+  CPYR() {
+    this.membus.ADDR = this.reg.PC + 1;
+    this.membus.READ();
+    const from = this.membus.DATA();
+    this.membus.ADDR = this.reg.PC + 2;
+    this.membus.READ();
+    const to = this.membus.DATA();
+
+    for (let i = from; i <= to; i++) {
+      this.membus.ADDR = i;
+      this.membus.READ();
+      const data = this.membus.DATA();
+      this.membus.ADDRVAL = data;
+      this.membus.WRITE();
     }
 
-    /**
-     * Jump to a supplied mem. address if 2 supplied reg address values are not equal.
-     * @method JNE
-     */
-    JNE() {
-        this.membus.ADDR = this.reg.PC + 1;                         // Set memory address for first argument
-        this.membus.READ();                                         // read memory
-        const m1 = this.membus.DATA();                              // get memory read data
-        this.membus.ADDR = this.reg.PC + 2;                         // set memory address for next argument
-        this.membus.READ();                                         // read memory
-        const m2 = this.membus.DATA();                              // get memory read data
-        // const m1 = this.mem[this.reg.PC + 1];
-        // const m2 = this.mem[this.reg.PC + 2];
-        if (m1 === m2) {
-            this.reg.PC += 4;
-        } else {
-            this.membus.ADDR = this.reg.PC + 3;                     // set memory address for read
-            this.membus.READ();                                     // read memory
-            this.reg.PC = this.membus.DATA();                       // read membus data
-            // this.reg.PC = this.mem[this.reg.PC + 3];
-        }
+    this.reg.PC += 3;
+    // TODO: this should take more than 1 cycle if more than x but we're going to do that later.
+  }
+
+  /**
+   * address a memory block for read and write
+   * @method ADR
+   */
+  ADR() {
+    this.reg[this.curReg] = this.reg.SRM;
+  }
+
+  /**
+   * set read address block
+   * @method RAD
+   */
+  RAD() {
+    // shift bits left by 4
+    // const read = this.reg[this.curReg] << 4;
+    // switching from looking for value in reg to value in next mem location
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read memory location
+    const read = this.membus.DATA();                            // read data from memory
+    read <<= 4;
+    // get right 4 bits
+    const write = this.reg.SRM & 0b00001111;
+    // assign the SMR the or of both.  (combine)
+    this.reg.SMR = read | write;
+    this.membus.setBANK(this.reg.SMR);                          // set mem banks
+    this.reg.PC += 2;
+  }
+
+  /**
+   * set read address block from register
+   * @method RADFR
+   */
+  RADFR() {
+    // shift bits left by 4
+    const read = this.reg[this.curReg] << 4;
+    // get right 4 bits
+    const write = this.reg.SRM & 0b00001111;
+    // assign the SMR the or of both.  (combine)
+    this.reg.SMR = read | write;
+    this.reg.PC += 1;
+  }
+
+  /**
+   * set write address block
+   * @method WAD
+   */
+  WAD() {
+    // get write bits
+    // // switching from looking for value in reg to value in next mem location
+    // const write = this.reg[this.curReg];
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read memory location
+    const write = this.membus.DATA();                           // read data from memory
+    // get current read bits and mask out write bits
+    const read = this.reg.SRM & 0b11110000;
+    // assign read and write
+    this.reg.SMR = read | write;
+    this.reg.PC += 2;
+  }
+
+  /**
+   * set write address block from register
+   * @method WADFR
+   */
+  WADFR() {
+    // get write bits
+    const write = this.reg[this.curReg];
+    // get current read bits and mask out write bits
+    const read = this.reg.SRM & 0b11110000;
+    // assign read and write
+    this.reg.SMR = read | write;
+    this.reg.PC += 1;
+  }
+
+  /**
+   * read address for block
+   * @method RADR
+   */
+  RADR() {
+
+  }
+
+  /**
+   * Read SRM value and place into current register
+   * @method RSRM
+   */
+  rsrm() {
+    this.reg[this.curReg] = this.reg.SRM;
+  }
+
+  /**
+   * [jumpToLabel description]
+   * @method jumpToLabel
+   * @return {[type]}    [description]
+   */
+  jumpToLabel() {
+    this.reg.PC += 2;
+  }
+
+  /**
+   * [setLabel description]
+   * @method setLabel
+   */
+  setLabel() {
+    this.reg.pc += 3;
+  }
+
+  /**
+   * (SET) (I)nterrupt Vector (address)
+   * @method SETI
+   */
+  SETI() {
+    this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
+    this.membus.READ();
+    const interruptNum = this.membus.DATA();                            // Read interrupt index                     EX: 0   /   1   /   2
+
+    const intVertex = this.alu('MUL', interruptNum, 0b00000010, true);  // Interrupt Vertex, not interrupt store    EX: 0   /   2   /   4
+    const lastIndex = this.alu('SUB', 0b00000000, 0b00000001, true);    // Get Last memory address                  Ex: 255
+
+    // console.log('last index: ', lastIndex);
+
+    const interLoc = this.alu('SUB', lastIndex, intVertex, true);       // Interrupt memory location                EX: 255 /   253 /   251
+
+    // console.log('interrupt location address: ', interLoc);
+
+    this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000010, true);  // Get second argument for
+    this.membus.READ();                                                 // location of interrupt in memory
+    const interruptDataLoc = this.membus.DATA();
+
+    // console.log(`Interrupt Memory Jump Location: ${interruptDataLoc}`);
+
+    this.membus.ADDR = interLoc;
+    this.membus.ADDRVAL = interruptDataLoc;
+    this.membus.WRITE();
+
+    this.reg.PC += 3;
+  }
+
+  /**
+   * (GET) (I)nterrupt Vector (address)
+   * @method GETI
+   */
+  GETI() {
+    this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
+    this.membus.READ();
+    const interruptNum = this.membus.DATA();                        // Read interrupt index
+    const intVertex = this.alu('MUL', interruptNum, 0b00000010, true);    // Interrupt Vertex, not interrupt store
+    const lastIndex = this.alu('SUB', 0b00000000, 0b00000001, true);      // Get Last memory address
+    const interLoc = this.alu('SUB', lastIndex, intVertex);         // Interrupt memory location
+    this.membus.ADDR = interLoc;
+    this.membus.READ();
+    this.reg[this.curReg] = interLoc;
+  }
+
+  /**
+   * (RET)urn from (I)nterrupt
+   * @method RETI
+   */
+  RETI() {
+    this.curReg = 254;
+    this.POP();
+    this.reg.PC = this.reg[this.curReg];
+  }
+
+  /**
+   * Get the input of the supplied extension bufer
+   * @method INPT
+   */
+  INPT() {
+    this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
+    this.membus.READ();
+    const extNum = this.membus.DATA();
+    const char = this.EXT.reg[extNum].input;
+
+    if (!this.bufferedString) this.bufferedString = '';
+
+    this.bufferedString += char;
+
+    switch (char) {
+      case '01110001': this.HALT(); break;
+      case '00001101': process.stdout.write('\n'); break;
+      default: process.stdout.write(String.fromCharCode(parseInt(char, 2)));
     }
 
-    /**
-     * load the value at MAR address in memory into MDR
-     * @method MEMLOAD
-     */
-    MEMLOAD() {
-        // set membus address
-        this.membus.ADDR = this.reg.MAR;
-        // instruct memory to read
-        this.membus.READ();
-        // set MDR
-        this.reg.MDR = this.membus.DATA();
-        // this.reg.MDR = this.mem[this.reg.MAR];
-    }
+    this.reg.PC += 2;
+  }
 
-    /**
-     * store the value in MDR in the mem location in MAR
-     * @method MEMSTORE
-     */
-    MEMSTORE() {
-        // Set memory address
-        this.membus.ADDR = this.reg.MAR;
-        // Set memory write value
-        this.membus.ADDRVAL = this.reg.MDR;
-        // instruct memory to write
-        this.membus.WRITE();
-        // this.mem[this.reg.MAR] = this.reg.MDR;
-    }
+  /**
+   * Put a byte in the extension buffer
+   * @method OTPT
+   */
+  OTPT() {
+    this.reg.PC += 2;
+  }
 
-    /**
-     * Loa(d) directly from memory
-     * @method LD
-     */
-    LD() {
-        // set memory address
-        this.membus.ADDR = this.reg.PC + 1;
-        // Read memory
-        this.membus.READ();
-        // set register with memory
-        this.reg[this.curReg] = this.membus.DATA();
-        // const ml = this.mem[this.reg.PC + 1];
-        // this.reg[this.curReg] = m1;
-        this.reg.PC += 2;
-    }
+  /**
+   * Call a subroutine at a specific location on next instruction
+   * @method CALL
+   */
+  CALL() {
+    this.curReg = 254;
+    this.reg[this.curReg] = this.reg.PC + 2;
+    this.PUSH();
+    // this.reg.PC = this.mem[this.reg.PC + 1];
+    this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
+    this.membus.READ();                                         // read from memory address
+    this.reg.PC = this.membus.DATA();                           // read memory data
+  }
 
-    /**
-     * (St)ore Directly to Memory
-     * @method ST
-     */
-    ST() {
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read memory location
-        const ml = this.membus.DATA();                              // read memory data
-        // const ml = this.mem[this.reg.PC + 1];
-        this.membus.ADDR = ml;                                      // set memory read/write address
-        this.membus.ADDRVAL = this.reg[this.curReg];                // set memory write value
-        this.membus.WRITE();                                        // write value to mem address
-        // this.mem[ml] = this.reg[this.curReg];
-        this.reg.pc += 2;                                           // increment counter 2
-    }
+  /**
+   * Return to the last line in the stack
+   * @method RET
+   */
+  RET() {
+    this.curReg = 254;
+    this.POP();
+    this.reg.PC = this.reg[this.curReg];
+  }
 
-    /**
-     * (L)oa(d)-(R)egister-(I)ndirect
-     * @method LDRI
-     */
-    LDRI() {
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read memory location
-        const rl = this.membus.DATA();                              // read memory data
-        // const rl = this.mem[this.reg.PC + 1];
-        this.membus.ADDR = rl;                                      // set memory read/write address
-        this.membus.READ();                                         // read memory from address
-        this.reg[this.curReg] = this.membus.DATA();                 // read memory data
-        // this.reg[this.curReg] = this.mem[rl];
-        this.reg.PC += 2;                                           // increment counter 2
-    }
+  /**
+   * Pop from stack
+   * @method POP
+   */
+  POP() {
+    // decremenet the SP holder
+    this.alu('INC', SP);
+    // store current Register at the location of the SP
+    this.membus.ADDR = SP;                                      // set memory read/write address
+    this.membus.READ();                                         // read memory location
+    this.reg[this.curReg] = this.membus.DATA();                 // read memory data
+    // this.reg[this.curReg] = this.mem[SP];
+  }
 
-    /**
-     * (St)ore (R)egister (I)ndirect
-     * @method STRI
-     */
-    STRI() {
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read memory location
-        const rl = this.membus.DATA;                                // read memory data
-        // const rl = this.mem[this.reg.PC + 1];
-        const ml = this.reg[rl];
-        this.membus.ADDR = ml;                                      // set memory read/write address
-        this.membus.ADDRVAL = this.reg[this.curReg];                // set memory data to write
-        this.membus.WRITE();                                        // write data to memory location
-        // this.mem[ml] = this.reg[this.curReg];
-        this.reg.PC += 2;                                           // increment counter 2
-    }
+  /**
+   * Push to stack
+   * @method PUSH
+   */
+  PUSH() {
+    // store the current Register at the SP location in memory
+    this.membus.ADDR = SP;                                      // set memory read/write address
+    this.membus.ADDRVAL = this.reg[this.curReg];                // set memory data
+    this.membus.WRITE();                                        // write to memory
+    // this.mem[SP] = this.reg[this.curReg];
+    // Incremeent the SP holder
+    this.alu('DEC', SP)
+  }
 
-    /**
-     * Set the PC.  if out of bounds, set to neutral number.
-     * @method SPC
-     */
-    SPC() {
-        // TODO: set bounds of max min;
-        // TODO: make sure it allows for a little before for terminal running.
-        // TODO: need a good memory set for this.
-    }
-
-    /**
-     * Copy Range (inclusive)
-     * @method CPYR
-     */
-    CPYR() {
-        this.membus.ADDR = this.reg.PC + 1;
-        this.membus.READ();
-        const from = this.membus.DATA();
-        this.membus.ADDR = this.reg.PC + 2;
-        this.membus.READ();
-        const to = this.membus.DATA();
-
-        for(let i = from; i <= to; i++) {
-            this.membus.ADDR = i;
-            this.membus.READ();
-            const data = this.membus.DATA();
-            this.membus.ADDRVAL = data;
-            this.membus.WRITE();
-        }
-
-        this.reg.PC += 3;
-        // TODO: this should take more than 1 cycle if more than x but we're going to do that later.
-    }
-
-    /**
-     * address a memory block for read and write
-     * @method ADR
-     */
-    ADR() {
-        this.reg[this.curReg] = this.reg.SRM;
-    }
-
-    /**
-     * set read address block
-     * @method RAD
-     */
-    RAD() {
-        // shift bits left by 4
-        // const read = this.reg[this.curReg] << 4;
-        // switching from looking for value in reg to value in next mem location
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read memory location
-        const read = this.membus.DATA();                            // read data from memory
-        read <<= 4;
-        // get right 4 bits
-        const write = this.reg.SRM & 0b00001111;
-        // assign the SMR the or of both.  (combine)
-        this.reg.SMR = read | write;
-        this.membus.setBANK(this.reg.SMR);                          // set mem banks
-        this.reg.PC += 2;
-    }
-
-    /**
-     * set read address block from register
-     * @method RADFR
-     */
-    RADFR() {
-        // shift bits left by 4
-        const read = this.reg[this.curReg] << 4;
-        // get right 4 bits
-        const write = this.reg.SRM & 0b00001111;
-        // assign the SMR the or of both.  (combine)
-        this.reg.SMR = read | write;
-        this.reg.PC += 1;
-    }
-
-    /**
-     * set write address block
-     * @method WAD
-     */
-    WAD() {
-        // get write bits
-        // // switching from looking for value in reg to value in next mem location
-        // const write = this.reg[this.curReg];
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read memory location
-        const write = this.membus.DATA();                           // read data from memory
-        // get current read bits and mask out write bits
-        const read = this.reg.SRM &0b11110000;
-        // assign read and write
-        this.reg.SMR = read | write;
-        this.reg.PC += 2;
-    }
-
-    /**
-     * set write address block from register
-     * @method WADFR
-     */
-    WADFR() {
-        // get write bits
-        const write = this.reg[this.curReg];
-        // get current read bits and mask out write bits
-        const read = this.reg.SRM &0b11110000;
-        // assign read and write
-        this.reg.SMR = read | write;
-        this.reg.PC += 1;
-    }
-
-    /**
-     * read address for block
-     * @method RADR
-     */
-    RADR() {
-
-    }
-
-    /**
-     * Read SRM value and place into current register
-     * @method RSRM
-     */
-    rsrm() {
-        this.reg[this.curReg] = this.reg.SRM;
-    }
-
-    /**
-     * [jumpToLabel description]
-     * @method jumpToLabel
-     * @return {[type]}    [description]
-     */
-    jumpToLabel() {
-        this.reg.PC += 2;
-    }
-
-    /**
-     * [setLabel description]
-     * @method setLabel
-     */
-    setLabel() {
-        this.reg.pc += 3;
-    }
-
-    /**
-     * (SET) (I)nterrupt Vector (address)
-     * @method SETI
-     */
-    SETI() {
-        this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
-        this.membus.READ();
-        const interruptNum = this.membus.DATA();                            // Read interrupt index                     EX: 0   /   1   /   2
-
-        const intVertex = this.alu('MUL', interruptNum, 0b00000010, true);  // Interrupt Vertex, not interrupt store    EX: 0   /   2   /   4
-        const lastIndex = this.alu('SUB', 0b00000000, 0b00000001, true);    // Get Last memory address                  Ex: 255
-
-        // console.log('last index: ', lastIndex);
-
-        const interLoc = this.alu('SUB', lastIndex, intVertex, true);       // Interrupt memory location                EX: 255 /   253 /   251
-
-        // console.log('interrupt location address: ', interLoc);
-
-        this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000010, true);  // Get second argument for
-        this.membus.READ();                                                 // location of interrupt in memory
-        const interruptDataLoc = this.membus.DATA();
-
-        // console.log(`Interrupt Memory Jump Location: ${interruptDataLoc}`);
-
-        this.membus.ADDR = interLoc;
-        this.membus.ADDRVAL =   interruptDataLoc;
-        this.membus.WRITE();
-
-        this.reg.PC += 3;
-    }
-
-    /**
-     * (GET) (I)nterrupt Vector (address)
-     * @method GETI
-     */
-    GETI() {
-        this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
-        this.membus.READ();
-        const interruptNum = this.membus.DATA();                        // Read interrupt index
-        const intVertex = this.alu('MUL', interruptNum, 0b00000010, true);    // Interrupt Vertex, not interrupt store
-        const lastIndex = this.alu('SUB', 0b00000000, 0b00000001, true);      // Get Last memory address
-        const interLoc = this.alu('SUB', lastIndex, intVertex);         // Interrupt memory location
-        this.membus.ADDR = interLoc;
-        this.membus.READ();
-        this.reg[this.curReg] = interLoc;
-    }
-
-    /**
-     * (RET)urn from (I)nterrupt
-     * @method RETI
-     */
-    RETI() {
-        this.curReg = 254;
-        this.POP();
-        this.reg.PC = this.reg[this.curReg];
-    }
-    
-    /**
-     * Get the input of the supplied extension bufer
-     * @method INPT
-     */
-    INPT() {
-        this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
-        this.membus.READ();
-        const extNum = this.membus.DATA();
-        const char = this.EXT.reg[extNum].input;
-        
-        if (!this.bufferedString) this.bufferedString = '';
-        
-        this.bufferedString += char;
-        
-        switch(char) {
-            case '01110001': this.HALT(); break;
-            case '00001101': process.stdout.write('\n'); break;
-            default: process.stdout.write(String.fromCharCode(parseInt(char, 2)));
-        }
-        
-        this.reg.PC += 2;
-    }
-    
-    /**
-     * Put a byte in the extension buffer
-     * @method OTPT
-     */
-    OTPT() {
-        this.reg.PC += 2;
-    }
-
-    /**
-     * Call a subroutine at a specific location on next instruction
-     * @method CALL
-     */
-    CALL() {
-        this.curReg = 254;
-        this.reg[this.curReg] = this.reg.PC + 2;
-        this.PUSH();
-        // this.reg.PC = this.mem[this.reg.PC + 1];
-        this.membus.ADDR = this.reg.PC + 1;                         // set memory read/write address
-        this.membus.READ();                                         // read from memory address
-        this.reg.PC = this.membus.DATA();                           // read memory data
-    }
-
-    /**
-     * Return to the last line in the stack
-     * @method RET
-     */
-    RET() {
-        this.curReg = 254;
-        this.POP();
-        this.reg.PC = this.reg[this.curReg];
-    }
-
-    /**
-     * Pop from stack
-     * @method POP
-     */
-    POP() {
-        // decremenet the SP holder
-        this.alu('INC', SP);
-        // store current Register at the location of the SP
-        this.membus.ADDR = SP;                                      // set memory read/write address
-        this.membus.READ();                                         // read memory location
-        this.reg[this.curReg] = this.membus.DATA();                 // read memory data
-        // this.reg[this.curReg] = this.mem[SP];
-    }
-
-    /**
-     * Push to stack
-     * @method PUSH
-     */
-    PUSH() {
-        // store the current Register at the SP location in memory
-        this.membus.ADDR = SP;                                      // set memory read/write address
-        this.membus.ADDRVAL = this.reg[this.curReg];                // set memory data
-        this.membus.WRITE();                                        // write to memory
-        // this.mem[SP] = this.reg[this.curReg];
-        // Incremeent the SP holder
-        this.alu('DEC', SP)
-    }
-
-    /**
-     * Blank instruction line.. skip
-     * @method BLANK
-     */
-    BLANK() {
-        // this.alu('INC', SP);
-        this.reg.PC++;
-    }
+  /**
+   * Blank instruction line.. skip
+   * @method BLANK
+   */
+  BLANK() {
+    // this.alu('INC', SP);
+    this.reg.PC++;
+  }
 }
 
 module.exports = CPU;

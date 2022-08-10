@@ -1,3 +1,5 @@
+const cur = require('./cursor-position');
+
 const cursorPosCommand = (col, line) => "\033[" + line + ';' + col + 'H';
 const clearScreenCommand = () => '\033[2J';
 const cursorUpCommand = (n) => '\033[' + n + 'A';
@@ -16,6 +18,11 @@ class Cursor {
         this._s = screen;
 
         this.targetID = 'cursor';
+
+        this.col = 0;
+        this.row = 0;
+
+        this.curPos = cur;
     }
 
     keyEventHandler() {
@@ -39,6 +46,7 @@ class Cursor {
     }
     
     clearLine() {
+    	//this.pos(0, this.curPos.row);
         process.stdout.write(eraseToEndCommand());
     }
     

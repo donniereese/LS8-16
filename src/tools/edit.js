@@ -42,6 +42,8 @@ class Term {
         this.key_targets = {}
 
         this.commandBuffer = [''];
+        this.errBuffer = '';
+        this.errPersist = false;
 
         readline.emitKeypressEvents(process.stdin);
         process.stdin.setRawMode(true);
@@ -56,6 +58,15 @@ class Term {
         this.registerKeyTarget(this);
     }
 
+    set errorMessage(err = 'Error') {
+    	this.errBuffer = err;
+    }
+
+    changeerrorMessage(err = 'Error', per = false) {
+       	this.errorMessage = err;
+    	this.errPersist = per;
+    }
+
     registerKeyTarget(obj) {
         this.key_targets[obj.targetID] = obj.keyEventHandler.bind(obj);
     }
@@ -67,37 +78,67 @@ class Term {
 
         if (cmdArr) {
             // parse command
+            let passed = false;
             for(let i = 0; i < cmdArr.length; i++) {
                 const cpath = cmdArr[i].split('.');
 
-                if (cpath[i] === this._target) {
+                if (cpath[0] === this._target) {
+                	passed = true;
                     this.key_targets[this._target](cpath);
-                } else {
-                    this.keyEventHandler(cpath);
                 }
+            }
+
+            if (!passed) {
+            	this.keyEventHandler(cpath);
             }
         } else if (this._target === 'buffer') {
             // write to buffer   
         } else {
             // ignore and write to command history
-            this.charIn(keyEvent);
+            if(keyEvent.isAlphaNumber() || keyEvent.isLineControl()) {
+            	this.charIn(keyEvent);
+            } else {
+            	this.errorMessage = `Error: keybinding "${keyEvent.rule}" doesn't exist`;
+            }
         }
         this.drawBuffer();
     }
 
     charIn(keyEvent) {
-        if (keyEvent.name === 'return') {
-            this.commandBuffer.push(this.commandBuffer[this.commandBuffer.length - 1]);
-        }
+    	const buffPointer = this.commandBuffer.length - 1;
+    	const curInput = this.commandBuffer[buffPointer];
 
-        this.commandBuffer[this.commandBuffer.length - 1] += keyEvent.code;
+		this.errorMessage = `keyEvent Status: ${keyEvent.isAlphaNumber()}`;
+
+        switch (keyEvent.name) {
+        	case 'return':
+        		// process 
+            	this.commandBuffer.push('');
+            	break;
+            case 'backspace':
+            	if (curInput.length === 0) break;
+            	this.commandBuffer[buffPointer] = curInput.slice(0, -1);
+            default:
+		        this.commandBuffer[buffPointer] += keyEvent.code;
+        }
     }
 
     keyEventHandler(cpath) {
         switch(cpath[1]) {
             case 'quit':
                 this.quitApp();
+               	break;
+            case 'input':
+            	this.inputControl(cpath.slice(2));
+            	break;
         }
+    }
+
+    inputControl(cpath) {
+    	switch(cpath[0]) {
+    		case 'backspace':
+    			
+    	}
     }
 
     on(event, handler) {
@@ -120,6 +161,10 @@ class Term {
             cursor.pos(this.screen.cursorAt.char, this.screen.cursorAt.line);       
         }
         if (this.commandBuffer.length >= 2) this.screen.drawStatus(this.commandBuffer[this.commandBuffer.length - 2]);
+        if (this.errBuffer.length > 0) {
+        	this.screen.drawStatus(this.errBuffer);
+        	if (!this.errPersist) this.errBuffer = '';
+        }
         this.screen.drawInput();
         this.screen.writeLine(this.commandBuffer[this.commandBuffer.length - 1]);
     }

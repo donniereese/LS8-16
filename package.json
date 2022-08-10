@@ -1,0 +1,19 @@
+{
+  "name": "ls8-16",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/ls8.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/donniereese/LS8-16.git"
+  },
+  "author": "Donnie Reese",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/donniereese/LS8-16/issues"
+  },
+  "homepage": "https://github.com/donniereese/LS8-16#readme"
+}
