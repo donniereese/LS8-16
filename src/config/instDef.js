@@ -1,14 +1,14 @@
 const inst = {};
 
-inst.INIT = { binary: 0b00000001, description: '', action: null, scope: null };       // Initialize                   0x01
-inst.INITALK = { binary: 0b11111110, description: '', action: null, scope: null };    // Initialize with Debug mode
-inst.SETR = { binary: 0b00000010, description: '', action: null, scope: null };       // Set Register                 0x02
-inst.GETR = { binary: 0b01101111, description: '', action: null, scope: null };       // Get Register Value
+inst.INIT = { binary: 0b00000001, description: 'Initialize the system', action: null, scope: null };       // Initialize                   0x01
+inst.INITALK = { binary: 0b11111110, description: 'Initialize the system in full debug', action: null, scope: null };    // Initialize with Debug mode
+inst.SETR = { binary: 0b00000010, description: 'Set Register', action: null, scope: null };       // Set Register                 0x02
+inst.GETR = { binary: 0b01101111, description: 'Get Register', action: null, scope: null };       // Get Register Value
 inst.SAVE = { binary: 0b00000100, description: '', action: null, scope: null };       //
 inst.LOAD = { binary: 0b00000111, description: '', action: null, scope: null };       //
 inst.MUL = { binary: 0b00000101, description: '', action: null, scope: null };        //
-inst.PRN = { binary: 0b00000110, description: '', action: null, scope: null };        //
-inst.HALT = { binary: 0b00000000, description: '', action: null, scope: null };       //
+inst.PRN = { binary: 0b00000110, description: 'Print to the buffer', action: null, scope: null };        //
+inst.HALT = { binary: 0b00000000, description: 'Halt the system', action: null, scope: null };       //
 
 // Output Extension
 inst.PRAR = { binary: 0b01000001, description: '', action: null, scope: null };       //

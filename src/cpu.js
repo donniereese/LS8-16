@@ -197,6 +197,11 @@ class CPU {
     // memory address register
     this.reg.MAR = 0b00000000;
 
+    // Operation Mode
+    // 0 - read
+    // 1 - write
+    this.MODE = 0;
+
     // Bus
     this.membus = bus;
     // set bus read/write banks
@@ -242,14 +247,14 @@ class CPU {
 
   buildBranchTable() {
     let bt = {
-      [INIT]: this.INIT,
-      [INITALK]: this.INITALK,
-      [SETR]: this.SETR,
-      [GETR]: this.GETR,
-      [SAVE]: this.SAVE,
-      [MUL]: this.MUL,
-      [PRN]: this.PRN,
-      [HALT]: this.HALT
+      [INIT]: dict.setForCodeINIT, // [INIT]: this.INIT,
+      [INITALK]: this.INITALK, // [INITALK]: this.INITALK,
+      [SETR]: this.SETR, // [SETR]: this.SETR,
+      [GETR]: this.GETR, // [GETR]: this.GETR,
+      [SAVE]: this.SAVE, // [SAVE]: this.SAVE,
+      [MUL]: this.MUL, // [MUL]: this.MUL,
+      [PRN]: this.PRN, // [PRN]: this.PRN,
+      [HALT]: this.HALT // [HALT]: this.HALT
     };
 
     // Look for Output extensions
@@ -297,6 +302,7 @@ class CPU {
     this.loaded = false;
     this.loadedRow = 0;
     this.loadedPos = 0;
+    this.loadedCount = 0;
 
     const loadscreen = [
       `00001000 00001000 00001000 00001000 00001000 00001000 00001000`,
@@ -434,10 +440,11 @@ class CPU {
    *
    */
   tick() {
+    this.MODE = (this.MODE + 1) % 2
 
     // If not load-complete, process
     if (!this.loaded) {
-      this.splash();
+      if (this.MODE == 1) this.splash();
       return;
     }
 
@@ -495,7 +502,7 @@ class CPU {
       this.write('\x1b[0;0H');
       this.write(space.repeat(26));
       this.write('\x1b[0;0H');
-      this.write(`PC:${this.reg.PC}  INSTRUCTION: ${currentInstruction.toString(16)}`);
+      this.write(`PC:${this.reg.PC}  INSTRUCTION: ${currentInstruction.toString(16)} Description: ${currentInstruction}`);
       this.write('\x1b[u');
     }
 

@@ -38,6 +38,7 @@ function loadMemory(contents) {
     const isHex = (char) => char.replace(/0-9a-fA-F/, '').length === 0;
     const isCommentChar = (char) => char.replace(/#/, '').length === 0;
     const isNewline = (char) => char.replace(/(\n)|(\n\n)|(\n\r)/, '').length === 0;
+    const isRegisterChar = (char) => char.replace(/r/, '').length === 0;
     const isCommandChar = (char) => char.replace(/\//, '').length === 0;
     const isCommandEndChar = (char) => char.replace(/;/, '').length === 0;
     const isWhitespace = (char) => char.replace(/\n|\s/, '').length === 0;
@@ -53,6 +54,7 @@ function loadMemory(contents) {
     let dataBase = dataFormats[dataType].base;
 
     const instructions = [''];
+    const registers = [0, 0, 0, 0, 0, 0, 0, 0];
 
     let instPointer = 0;
     let instLen = 0;
@@ -108,7 +110,7 @@ function loadMemory(contents) {
                     // commandOp flag is true and it's the value Buffer
                     if (isCommandEndChar(curChar)) {
                         // run the command stuff
-                        switch(commandBuffer) {
+                        switch (commandBuffer) {
                             case 'dT':
                                 dataType = valueBuffer;
                                 dataLength = dataFormats[dataType].length;
@@ -134,6 +136,10 @@ function loadMemory(contents) {
             }
             continue;
         }
+        // If we are looking at a register address
+        if (isRegisterChr(curChar)) {
+
+        }
         // Alright, at this point we are to processing actual input?
         // check if the pointer needs to be moved up
         if (instLen >= dataLength) {
@@ -146,6 +152,7 @@ function loadMemory(contents) {
             isComment = true;
             continue;
         }
+
         // is it a space or newline?
         if (isWhitespace(curChar)) continue;
         // append char to the current instruction
@@ -179,8 +186,8 @@ const memoryBus = new MEMBUS([rom, mem], [wBus, rBus, insBus]);
 const keyboard = new KEYBOARD();
 const display = new DISPLAY();
 const cpu = new CPU([
-    (a,b) => {keyboard.hook(a,b)},
-    (a, b) => {display.hook(a, b)},
+    (a, b) => { keyboard.hook(a, b) },
+    (a, b) => { display.hook(a, b) },
 ], memoryBus);
 const contents = readFrom(ar[0]);
 const instructionsArray = loadMemory(contents);

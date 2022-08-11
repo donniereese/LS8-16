@@ -13,6 +13,7 @@ class Dictionary {
       args: args,
     }
   }
+
   getByCode(code) {
     const i = this.codes[code];
     if (!i) return undefined;
@@ -23,6 +24,10 @@ class Dictionary {
     const i = this.instructions[inst];
     if (!i) return undefined;
     return this.instructions[i];
+  }
+
+  setForCode(values = {}) {
+    const { code, inst, desc, args, action, scope } = values;
   }
 }
 
