@@ -33,11 +33,13 @@ const readFrom = (fn) => {
 }
 
 // load file into CPU memory
-function loadMemory(contents) {
+const loadMemory = (contents) => {
     const isBinary = (char) => char.replace(/[0-1]/, '').length === 0;
     const isHex = (char) => char.replace(/0-9a-fA-F/, '').length === 0;
     const isCommentChar = (char) => char.replace(/#/, '').length === 0;
     const isNewline = (char) => char.replace(/(\n)|(\n\n)|(\n\r)/, '').length === 0;
+    const isRelativeChar = (char) => char.replace(/%/, '').length === 0;
+    const isReferanceChar = (char) => char.replace(/@/, '').length === 0;
     const isRegisterChar = (char) => char.replace(/r/, '').length === 0;
     const isCommandChar = (char) => char.replace(/\//, '').length === 0;
     const isCommandEndChar = (char) => char.replace(/;/, '').length === 0;
@@ -55,12 +57,16 @@ function loadMemory(contents) {
 
     const instructions = [''];
     const registers = [0, 0, 0, 0, 0, 0, 0, 0];
+    const relativeAddr = []
+    const referenceAddr = []
+    const curRelAddr = -1;
 
     let instPointer = 0;
     let instLen = 0;
     let lastChar = null;
     let curChar = null;
     let isComment = false;
+    let isRelAddress = false;
     let isCommand = true;
     let commandFlags = {
         setDataType: false,
@@ -78,6 +84,8 @@ function loadMemory(contents) {
         commandFlags.setDataType = false;
         commandFlags.setDataWidth = false;
     }
+
+    const isFirstChar = () => (!isComment && !isCommand && !isRelAddress && instLen === 0);
 
     while (contents.length > 0) {
         // Get the next char
@@ -136,10 +144,7 @@ function loadMemory(contents) {
             }
             continue;
         }
-        // If we are looking at a register address
-        if (isRegisterChr(curChar)) {
 
-        }
         // Alright, at this point we are to processing actual input?
         // check if the pointer needs to be moved up
         if (instLen >= dataLength) {
@@ -147,14 +152,27 @@ function loadMemory(contents) {
             instPointer++;
             instLen = 0;
         }
-        // is this a comment character?
+        // 1. is this a comment character?
         if (isCommentChar(curChar)) {
             isComment = true;
             continue;
         }
 
-        // is it a space or newline?
+        // 2. is it a space or newline?
         if (isWhitespace(curChar)) continue;
+
+        // 3. If we are looking at a register address
+        if (isFirstChar() && isRelativeChar(curChar)) {
+            isRelAddress = true;
+
+            return true;
+        }
+
+        if (isFirstChar() && isReferanceChar(curChar)) {
+
+            return;
+        }
+
         // append char to the current instruction
         instLen++;
         if (instructions.length < instPointer + 1) instructions[instPointer] = '';
@@ -162,6 +180,10 @@ function loadMemory(contents) {
     }
     // console.log(instructions);
     return instructions;
+}
+
+const linkReferences = (inst = [], relativeAddr = [], referanceAddr = []) => {
+
 }
 
 
@@ -190,7 +212,7 @@ const cpu = new CPU([
     (a, b) => { display.hook(a, b) },
 ], memoryBus);
 const contents = readFrom(ar[0]);
-const instructionsArray = loadMemory(contents);
+const instructionsArray = linkReferences(loadMemory(contents));
 
 instructionsArray.forEach((v, i) => { rom._bank[i] = v });
 
