@@ -767,7 +767,7 @@ class CPU {
   }
 
   /**
-   * (PR)int (A)lpha-numeric char from Register
+   * (PR)int (A)lpha-numeric char from [R]egister
    * @method PRAR
    */
   PRAR() {
@@ -778,7 +778,7 @@ class CPU {
   }
 
   /**
-   * (PR)int (A)lpha-numeric char from memory
+   * (PR)int (A)lpha-numeric char from [M]emory
    * @method PRAM
    */
   PRAM() {
