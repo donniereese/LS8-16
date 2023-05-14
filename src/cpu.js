@@ -1146,6 +1146,8 @@ class CPU {
   /**
    * (SET) (I)nterrupt Vector (address)
    * @method SETI
+   * @arg interruptNumber
+   * @arg interruptAddress
    */
   SETI() {
     this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);
@@ -1177,6 +1179,7 @@ class CPU {
   /**
    * (GET) (I)nterrupt Vector (address)
    * @method GETI
+   * @arg interruptNumber
    */
   GETI() {
     this.membus.ADDR = this.alu('ADD', this.reg.PC, 0b00000001, true);

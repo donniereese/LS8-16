@@ -41,6 +41,7 @@ const loadMemory = (contents) => {
     const isRelativeChar = (char) => char.replace(/%/, '').length === 0;
     const isReferanceChar = (char) => char.replace(/@/, '').length === 0;
     const isRegisterChar = (char) => char.replace(/r/, '').length === 0;
+    const isRefRefChar = (char) => char.replace(/\*/, '').length === 0;
     const isCommandChar = (char) => char.replace(/\//, '').length === 0;
     const isCommandEndChar = (char) => char.replace(/;/, '').length === 0;
     const isWhitespace = (char) => char.replace(/\n|\s/, '').length === 0;
@@ -67,6 +68,9 @@ const loadMemory = (contents) => {
     let curChar = null;
     let isComment = false;
     let isRelAddress = false;
+    let isRefAddress = false;
+    let isRelRef = false;
+    let isRefRef = false;
     let isCommand = true;
     let commandFlags = {
         setDataType: false,
@@ -79,6 +83,10 @@ const loadMemory = (contents) => {
     const resetCommands = () => {
         isCommand = false;
         isComment = false;
+        isRefRef = false;
+        isRelRef = false;
+        isRelAddress = false;
+        isRefAddress = false;
         commandBuffer = '';
         valueBuffer = '';
         commandFlags.setDataType = false;
@@ -148,7 +156,13 @@ const loadMemory = (contents) => {
         // Alright, at this point we are to processing actual input?
         // check if the pointer needs to be moved up
         if (instLen >= dataLength) {
-            instructions[instPointer] = parseInt(instructions[instPointer], dataBase);
+        		const parsedHex = parseInt(instructions[instPointer], dataBase)
+						let tempInst = parsedHex;
+        		if (isRefAddr) {
+        			tempInst = referenceAddr[tempInst]
+        			if (!tempInst) throw new Error('Reference address missing')
+        		}
+            instructions[instPointer] = tempInst;
             instPointer++;
             instLen = 0;
         }
@@ -168,22 +182,19 @@ const loadMemory = (contents) => {
             return true;
         }
 
-        if (isFirstChar() && isReferanceChar(curChar)) {
-
-            return;
-        }
-
         // append char to the current instruction
         instLen++;
-        if (instructions.length < instPointer + 1) instructions[instPointer] = '';
-        instructions[instPointer] = `${instructions[instPointer]}${curChar}`;
+        if (instructions.length < instPointer + 1) {
+        	instructions[instPointer] = '';
+        	instructions[instPointer] = `${instructions[instPointer]}${curChar}`;
+        }
     }
     // console.log(instructions);
     return instructions;
 }
 
 const linkReferences = (inst = [], relativeAddr = [], referanceAddr = []) => {
-
+	return inst;
 }
 
 

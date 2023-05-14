@@ -1,18 +1,24 @@
-const grammer = [ 
-//	inst				op			type				argTypes
-// --------------------------------------------------------
-	['INIT',			'00',		'cmd',			[]],
-	['INITALK',		'FE',		'cmd',			[]],
-	['SETR',			'01',		'setAddr',	['REG_ADDR']],
-	['GETR',			'6F',		'getVal',		[]],
-	['SAVE',			'04',		'prgCpy',		[]],
-	['LOAD',			'07',		'prgLd',		[]],
-	['PRN',				'06',		'prnBuf',		[]],
-	['HALT',			'00',		'cmd',			[]],
-	['PRAR',			'41',		'prnChar',	['REG_VAL']],
-	['PRAM',			'42',		'prnChar',	['MEM_VAL']],
-	['LD',				'08',		'setVal',		['MEM_VAL']],
-	['ST',]
-]
+import Lexer from "./lexer";
 
-module.exports = grammer;
+class TokenData {
+  constructor() {
+    this.value;
+    this.id;
+    this.line;
+    this.column;
+    this.length;
+          
+  }
+}
+
+class Token extends TokenData {
+  constructor(params = new TokenData(), ctx = new Lexer.Lexer()) {
+    this.lexer = ctx;
+    this.set(params, false);
+  }
+  setValue(newValue, update = true) {}
+  moveTo(line, column, update = true) {}
+  moveBy(line, column, update = true) {}
+  set(params, update = true) {}
+  remove() {}
+}

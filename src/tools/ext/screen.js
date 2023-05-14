@@ -23,7 +23,11 @@ class Screen {
 
     writeLine(line) {
         const maxChar = this.width - this.cursorAt.char;
-        process.stdout.write(line.toString().substr(this.cursorAt.char, maxChar - 1));
+        try {
+	        process.stdout.write(line.toString().substr(this.cursorAt.char, maxChar - 1));
+	      } catch(e) {
+	      	console.log(`writeLine(line) - \n\n${line}\n\n`)
+	      }
     }
     
     moveToInput() {
