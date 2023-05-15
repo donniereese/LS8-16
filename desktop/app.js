@@ -1,4 +1,5 @@
-const eg, { AppManager } = require('./lib/eg');
+const eg = require('./lib/eg');
+const AppManager = eg.AppManager;
 
 const app = new AppManager();
 

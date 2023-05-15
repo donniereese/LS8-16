@@ -1,7 +1,9 @@
-const Electron, { BrowserWindow, app } = require('electron')
 const path = require('path')
+const Electron = require('electron')
+const BrowserWindow = Electron.BrowserWindow
+const app = Electron.app
 
-const Trype = require('../../Trype/Trype.js');
+const Trype = require('../src/modules/Trype.js');
 
 const { windowOptions } = require('./options.js');
 
@@ -20,9 +22,6 @@ class DisplayReference {
 
 
 class AppManager {
-  appRef;
-  _winGen;
-  
   constructor() {
     this.appRef = app;
     this._winGen = false;
@@ -43,24 +42,26 @@ class AppManager {
   hide() {
     
   }
+
+  manage() {
+    
+  }
 }
 
 
 
 class WindowObject {
-  windowRef;
-  windowEvents;
-  parentWindow;
-  _icon;
-  _title;
-  _x;
-  _y;
-
   constructor(data = Object.assign({}, windowOptions)) {
     if (!appInstance) appInstance = new AppManager();
 
-    this.x(data.x || )
+    this.x(data.x || 0)
     this.windowRef = new BrowserWindow();
+    this.windowEvents;
+    this.parentWindow;
+    this._icon;
+    this._title;
+    this._x;
+    this._y;
   }
 
   on(event, handler) {

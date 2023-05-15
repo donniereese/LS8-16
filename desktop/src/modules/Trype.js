@@ -1,29 +1,3 @@
-
-let Trype = (function() {
-    instance = null;
-
-    class Trype {
-        constructor() {
-            if (!instance) instance = this;
-            this._type = 'object';
-            this._data;
-            this.check = new CheckTypes();
-
-            return instance;
-        }
-
-        get value() {
-
-        }
-
-        set value(v) {
-          this._data = v;
-
-        }
-    }
-})()
-
-
 class CheckTypes {
     constructor(idents) {
         this._data = (this.isArray(idents)) ? idents : [idents];
@@ -61,6 +35,35 @@ class CheckTypes {
 
     }
 }
+
+class Trype {
+    constructor() {
+        if (!instance) instance = this;
+        this._type = 'object';
+        this._data;
+        this.check = new CheckTypes();
+
+        return instance;
+    }
+
+    get value() {
+
+    }
+
+    set value(v) {
+        this._data = v;
+
+    }
+}
+
+
+let TrypeBuilder = (function () {
+    instance = null;
+
+    if (!instance) instance = new Trype();
+
+    return instance;
+})()
 
 class StringTrype extends Trype {
 

@@ -158,10 +158,6 @@ const loadMemory = (contents) => {
         if (instLen >= dataLength) {
         		const parsedHex = parseInt(instructions[instPointer], dataBase)
 						let tempInst = parsedHex;
-        		if (isRefAddr) {
-        			tempInst = referenceAddr[tempInst]
-        			if (!tempInst) throw new Error('Reference address missing')
-        		}
             instructions[instPointer] = tempInst;
             instPointer++;
             instLen = 0;
