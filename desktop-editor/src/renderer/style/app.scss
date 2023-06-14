@@ -1,0 +1,34 @@
+.app_window {
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+.window {
+  &_title {
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    color: #1e1f2000;
+    text-shadow: 1px 1px 1px #ffffff33, -1px -1px 1px #00000055;
+  }
+
+  &_controls {
+    display: flex;
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+
+    &_button {
+      &_close {
+        background-color: #ff5f57;
+      }
+      &_minimize {
+        background-color: #ffbd2e;
+      }
+      &_maximize {
+        background-color: #28ca41;
+      }
+    }
+  }
+}
