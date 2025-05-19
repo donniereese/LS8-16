@@ -20,8 +20,12 @@ let contents = [];
 const makeList = (length = 256) => {
 	const temp = [];
 	for (let i = 0; i < length; i++) {
-		temp[i] = i.toString(16).padStart(2, '0');
-	}
+		temp[i] = [
+		i.toString(16).padStart(2, '0'),
+		'unset',
+		'',
+		'',
+	]
 
 	return temp;
 }
@@ -35,11 +39,15 @@ const writeLines = (contents) => {
 		const bytecode = line[1]
 		const type = line[2]
 		const byteDecimal = parseInt(bytecode, 16)
-		const orig = fullList[byteDecimal]
+
+		if (byteDecimal) {
+			const orig = fullList[byteDecimal]
+			fullList[byteDecimal] = [bytecode, inst, '', '']
+		}
+		
 		// Remove from array
 		contents.shift();
 
-		fullList[byteDecimal] = `\n${orig} - ${bytecode} - ${inst}    `
 	}
 
 	return fullList;
@@ -47,4 +55,6 @@ const writeLines = (contents) => {
 
 const l = writeLines(readFrom(ar[0]))
 
-for (let i = 0; i < l.length; i++) process.stdout.write(l[i])
+//for (let i = 0; i < l.length; i++) process.stdout.write(l[i])
+
+console.log(l)

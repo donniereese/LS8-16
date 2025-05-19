@@ -37,17 +37,27 @@ class Lexer {
   
   loadDefinition(def) {
     if (this.expr.length > 0) this.expr += "|";
-      this.expr += `(${def.match})`;
-      this.regex = undefined;
-      this.grammar.push(def);
+    this.expr += `(${def.match})`;
+    this.regex = undefined;
+    this.grammar.push(def);
 
-      return this;
-    }
+     return this;
   }
   
   loadGrammar(grammar = []) {
     for (const def of grammar) {
-      this.loadDefinition(def);
+    	this.loadDefinition({
+    		id: def[2], 
+    		match: def[0], 
+    	});
+    	if (def[4].length > 0) {
+    		for (const arg of def[4]) {
+    			this.loadDefinition({
+    				id: arg, 
+    				match: (arg === "MEM_VAL")
+    			})
+    		}
+    	}
     }
     
     return this;

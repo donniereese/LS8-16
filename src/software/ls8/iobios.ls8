@@ -1,0 +1,80 @@
+// This is a commented line
+
+/* 
+  1. Program Structure
+    a. Method creation - Defines the bounds of a method
+      ```
+      def METHOD_NAME::
+        ...
+      METHOD_NAME;
+      ```
+
+  2. Addressing References:
+    - % is a program method name
+    - @ is a global methiod name
+    - * is a memory address pointer
+    - $ is an memory address pointer relative to the application start
+ 
+  3. Registers
+    a. System Registers (Does not clear automatically)
+      - PROGV - Program Variables Array
+      - PC – Program Counter (Next address to be executed)
+      - X0 – Always set to 0 when read (Is of the size of the memory width)
+      - X1 – Return address
+    b. Program Registers
+      - S0 ... S07 - Static Interrupt Addresses
+      - S8 - Program Interrupt Flag
+      - S9 ... S15 - Program Interrupt Address
+    b. Temporary Registers (Clears at every stack frame)
+      - RP – Register Pointer
+      - R0 ... R15 - Temp Registers
+    c. ALU Registers (Math Registers)
+      - AC – Accumulator
+      - AR – Argument
+    e. STACKV - Stack Variables
+      - MV1 ... MV8
+  
+	R. Reference Tables
+    a. Aliases
+    	Register | Alias
+    	---------|---------
+    	X0       | ZERO
+    	X1       | RA
+    	X2       | SP
+    	X3       | GP
+	    X4 - X7  | T0 - T3
+  	  X8 - X15 | P0 - P7
+    	S0 - S7  | IR0 - IR7
+	    S8       | SIRE
+  	  S9 - S15 | SIR0 - SIR6
+    	PC       | PC
+    	A0			 | AC
+    	A1       | AR
+  	b. Datatypes
+	    Datatype          | size in bytes
+  	  ------------------|---------------
+    	byte              | 1
+	    unsigned byte     | 1 
+  	  halfword          | 2
+    	unsigned halfword | 2
+	    word              | 4
+  	  unsigned word     | 4
+*/
+
+def KEYBOARD_INTERRUPT::
+  # SETR RP *R0
+  @LDINTBUFF *R1
+KEYBOARD_INTERRUPT;
+
+
+def MAIN::
+  SETR S8, *KEYBOARD_INTERRUPT;
+MAIN;
+
+
+def INIT::
+  PROGV ERROR_CODE, 8
+  SETI S0, %KEYBOARD_INTERRUPT;
+  SETIB *R0,
+  JMP %MAIN;
+INIT;

@@ -1,14 +1,12 @@
-# This program was written by Donnie Reese for the LS8 emulator
-# It boots to a waiting state and prints whatever keyboard input
-# a user types onto the display.
 #/dT:h2;
 FE # INIT
-60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------+
-20 # SETI                   + Set interrupt address to memory location
-00 #   INT_ADDR = 0         + Interrupt 0 is always the keyboard
-0D #   ADDR = 13            + The address for the interrupt code
-11 # JMP                    + Jump to memory address
-39 # MEM_ADDR = 57          + Memory address to jump to
+11 # JMP
+20 #   MEM_ADDR = 32
+60 # LABEL: -- [ PROGRAM ADDRESSES ] ------------------------------------------+
+00 # 												+ SLOT 1
+00 # 												+ SLOT 2
+00 #												+ SLOT 3
+00 # 												+ SLOT 4
 60 # LABEL: -- [ PROGRAM VARIABLES ] ------------------------------------------+
 00 # ERROR_CODE             + 
 00 #                        + 
@@ -33,6 +31,12 @@ FE # INIT
 00 # 
 00 # 
 00 # 
+60 # LABEL: -- [ PROGRAM INIT ] -----------------------------------------------+
+20 # SETI                   + Set interrupt address to memory location
+00 #   INT_ADDR = 0         + Interrupt 0 is always the keyboard
+26 #   ADDR = 38            + The address for the interrupt code
+11 # JMP                    + Jump to memory address
+40 # MEM_ADDR = 64          + Memory address to jump to
 60 # LABEL: -- [ KEYBOARD INTERRUPT ] -----------------------------------------+
 02 # SETR                   + set REG_ADDR
 02 #   REG_ADDR = 2         + to ACCUMULATOR

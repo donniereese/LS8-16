@@ -19,6 +19,7 @@ export default function App({ ipc }) {
             <nav className='bg-slate-100 window_controls abs-controls'>
               <h1 className='bg-slate-400 window_title'>LS8 Editor</h1>
             </nav>
+
             <div className='screen-frame--inner'>
               <div className="canvas-container">
                 <Router>
